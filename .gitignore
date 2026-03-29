@@ -1,0 +1,9 @@
+node_modules/
+server/node_modules/
+client/node_modules/
+.env
+
+# AI Models (මේ ටික තියෙන එක ගොඩක් වැදගත්)
+ai-service/saved_model/model_weights.pt
+*.pt
+*.pth

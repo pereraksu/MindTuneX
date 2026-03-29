@@ -1,0 +1,177 @@
+{
+  "neutral_patterns": [
+    "nothing special",
+    "nothing much",
+    "just normal",
+    "ordinary day",
+    "regular day",
+    "do not feel anything",
+    "feel okay",
+    "just okay",
+    "neither happy nor sad",
+    "normal day",
+    "pretty standard",
+    "not strongly emotional",
+    "usual day",
+    "emotionally stable",
+    "just going through my day",
+    "just another day",
+    "no strong feelings",
+    "fairly ordinary",
+    "average day",
+    "i am fine",
+    "i feel fine"
+  ],
+  "explanation_keywords": {
+    "joy": [
+      "happy",
+      "amazing",
+      "great",
+      "excited",
+      "overjoyed",
+      "wonderful",
+      "glad",
+      "joyful"
+    ],
+    "calm": [
+      "peaceful",
+      "calm",
+      "relaxed",
+      "meditation",
+      "serene",
+      "ease",
+      "settled",
+      "grounded"
+    ],
+    "stress": [
+      "deadline",
+      "pressure",
+      "overwhelmed",
+      "stressed",
+      "burden",
+      "responsibilities",
+      "urgent"
+    ],
+    "anxiety": [
+      "nervous",
+      "worried",
+      "anxious",
+      "uneasy",
+      "interview",
+      "presentation",
+      "exam",
+      "restless"
+    ],
+    "sadness": [
+      "heartbroken",
+      "crying",
+      "sad",
+      "grief",
+      "lonely",
+      "depressed",
+      "down"
+    ],
+    "anger": [
+      "furious",
+      "angry",
+      "annoyed",
+      "irritated",
+      "mad",
+      "frustrated"
+    ],
+    "fatigue": [
+      "drained",
+      "exhausted",
+      "tired",
+      "sleepy",
+      "worn out",
+      "no energy",
+      "fatigued"
+    ],
+    "love": [
+      "love",
+      "adore",
+      "cherish",
+      "family",
+      "care",
+      "affection"
+    ],
+    "fear": [
+      "terrified",
+      "afraid",
+      "scared",
+      "fear",
+      "frightened"
+    ],
+    "disgust": [
+      "disgusting",
+      "gross",
+      "revolting",
+      "disgust",
+      "awful"
+    ],
+    "surprise": [
+      "shocked",
+      "surprised",
+      "unexpected",
+      "amazed",
+      "astonished"
+    ],
+    "neutral": [
+      "okay",
+      "normal",
+      "ordinary",
+      "fine",
+      "regular",
+      "standard"
+    ]
+  },
+  "trigger_categories": {
+    "work_study": [
+      "exam",
+      "deadline",
+      "assignment",
+      "work",
+      "job",
+      "meeting",
+      "presentation",
+      "interview",
+      "study"
+    ],
+    "family_relationship": [
+      "family",
+      "mother",
+      "father",
+      "friend",
+      "relationship",
+      "partner",
+      "wife",
+      "husband"
+    ],
+    "health_energy": [
+      "tired",
+      "sleep",
+      "sick",
+      "headache",
+      "drained",
+      "exhausted",
+      "energy",
+      "fatigue"
+    ],
+    "daily_life": [
+      "day",
+      "morning",
+      "night",
+      "home",
+      "routine",
+      "today",
+      "walk",
+      "meditation"
+    ]
+  },
+  "confidence_levels": {
+    "high": ">= 0.80",
+    "medium": "0.55 to 0.79",
+    "low": "< 0.55"
+  }
+}

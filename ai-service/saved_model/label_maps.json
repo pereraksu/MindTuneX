@@ -1,0 +1,30 @@
+{
+  "emotion2id": {
+    "joy": 0,
+    "calm": 1,
+    "stress": 2,
+    "anxiety": 3,
+    "sadness": 4,
+    "anger": 5,
+    "fatigue": 6,
+    "love": 7,
+    "fear": 8,
+    "disgust": 9,
+    "surprise": 10,
+    "neutral": 11
+  },
+  "id2emotion": {
+    "0": "joy",
+    "1": "calm",
+    "2": "stress",
+    "3": "anxiety",
+    "4": "sadness",
+    "5": "anger",
+    "6": "fatigue",
+    "7": "love",
+    "8": "fear",
+    "9": "disgust",
+    "10": "surprise",
+    "11": "neutral"
+  }
+}

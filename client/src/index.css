@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
+
+.recharts-responsive-container {
+  min-height: 300px !important;
+  min-width: 100px !important;
+}
