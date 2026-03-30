@@ -1,98 +1,125 @@
 const axios = require("axios");
 const MoodEntry = require("../models/MoodEntry");
 
-// මේක තමයි අපේ Python AI Server එක Run වෙන තැන
 const AI_SERVICE_URL = "http://127.0.0.1:8000/predict";
 
-// AI එකට කතා කරන Function එක
 const callAIService = async (text) => {
   const response = await axios.post(AI_SERVICE_URL, { text });
   return response.data.data;
 };
 
+/**
+ * --- A. AI එකෙන් Prediction එක විතරක් ලබාගැනීමට ---
+ */
 const predictMood = async (req, res) => {
   try {
     const { text } = req.body;
+    if (!text) return res.status(400).json({ message: "Text is required" });
+    const prediction = await callAIService(text);
+    res.json({ message: "Prediction successful", data: prediction });
+  } catch (error) {
+    res.status(500).json({ message: "Prediction failed", error: error.message });
+  }
+};
 
-    if (!text) {
-      return res.status(400).json({ message: "Text is required" });
+/**
+ * --- B. Dashboard එකේ Emoji Buttons සඳහා (Quick Check-in) ---
+ */
+const quickMoodCheckIn = async (req, res) => {
+  try {
+    const { emotion, predictedEmotion, inputText, sentimentLabel, source, confidence } = req.body;
+    const finalEmotion = emotion || predictedEmotion;
+
+    if (!finalEmotion) {
+      return res.status(400).json({ message: "Emotion value is required" });
     }
 
-    // AI Model එකෙන් ප්‍රතිඵල ලබාගැනීම
-    const prediction = await callAIService(text);
+    // Validation Error මගහැරීමට confidenceLevel පේළිය අයින් කරන ලදී
+    const moodEntry = await MoodEntry.create({
+      user: req.user._id,
+      predictedEmotion: finalEmotion.toLowerCase(),
+      source: "journal", 
+      inputText: inputText || `Quick check-in: ${finalEmotion}`,
+      confidence: confidence || 1,
+      // මෙතන confidenceLevel පාවිච්චි නොකර සේව් කරමු (Schema default value එක ගනීවි)
+      sentimentLabel: sentimentLabel || (["joy", "calm", "love"].includes(finalEmotion.toLowerCase()) ? "positive" : "negative")
+    });
 
-    res.json({
-      message: "Prediction successful",
-      data: prediction,
+    res.status(201).json({ 
+      success: true,
+      message: "Mood saved successfully", 
+      data: moodEntry 
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Prediction failed (Is Python AI Service running?)",
-      error: error.message,
+    console.error("Quick save error:", error.message);
+    res.status(500).json({ 
+      success: false,
+      message: "Error saving mood", 
+      error: error.message 
     });
   }
 };
 
+/**
+ * --- C. Journal Entries AI හරහා සේව් කිරීමට ---
+ */
 const saveMoodEntry = async (req, res) => {
   try {
     const { text, source } = req.body;
+    if (!text) return res.status(400).json({ message: "Text is required" });
 
-    if (!text) {
-      return res.status(400).json({ message: "Text is required" });
-    }
-
-    // AI Model එකෙන් ප්‍රතිඵල ලබාගැනීම
     const prediction = await callAIService(text);
 
-    // AI එකෙන් ආපු ප්‍රතිඵල Database එකේ සේව් කිරීම
     const moodEntry = await MoodEntry.create({
       user: req.user._id,
       inputText: prediction.inputText,
       cleanText: prediction.cleanText,
       predictedEmotion: prediction.predictedEmotion,
-      rawPrediction: prediction.rawPrediction,
       confidence: prediction.confidence,
       confidenceLevel: prediction.confidenceLevel,
       sentimentScore: prediction.sentimentScore,
       sentimentLabel: prediction.sentimentLabel,
-      recommendationType: prediction.recommendationType,
-      supportLevel: prediction.supportLevel,
-      triggerCategory: prediction.triggerCategory,
-      explanationKeywords: prediction.explanationKeywords,
-      top3Predictions: prediction.top3Predictions,
       source: source || "journal",
     });
 
-    res.status(201).json({
-      message: "Mood entry saved successfully",
-      data: moodEntry,
+    res.status(201).json({ 
+      success: true,
+      message: "Mood entry saved successfully", 
+      data: moodEntry 
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Save failed",
-      error: error.message,
+    console.error("Journal save error:", error.message);
+    res.status(500).json({ 
+      success: false,
+      message: "Save failed", 
+      error: error.message 
     });
   }
 };
 
+/**
+ * --- D. පරිශීලකයාගේ සියලුම Mood Entries ලබාගැනීම ---
+ */
 const getMyMoodEntries = async (req, res) => {
   try {
     const moods = await MoodEntry.find({ user: req.user._id }).sort({ createdAt: -1 });
-
-    res.json({
-      message: "Mood entries fetched successfully",
-      data: moods,
+    res.json({ 
+      success: true,
+      message: "Mood entries fetched successfully", 
+      data: moods 
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Fetch failed",
-      error: error.message,
+    res.status(500).json({ 
+      success: false,
+      message: "Fetch failed", 
+      error: error.message 
     });
   }
 };
 
 module.exports = {
   predictMood,
+  quickMoodCheckIn,
   saveMoodEntry,
   getMyMoodEntries,
 };

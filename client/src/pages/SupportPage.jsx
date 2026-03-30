@@ -44,7 +44,6 @@ const SupportPage = () => {
   };
 
   return (
-    // Background - Dark mode added
     <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-sky-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
       <Sidebar />
 
@@ -122,17 +121,71 @@ const SupportPage = () => {
 
             {/* Results Area */}
             {support && (
-              <div className="animate-[fadeIn_0.5s_ease] space-y-8">
-                <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                  2. Your Personalized Action Plan
-                </h2>
+              <div className="animate-[fadeIn_0.5s_ease] space-y-10">
                 
-                <div className="grid gap-6 lg:grid-cols-2">
-                  {/* Note: Ensure SupportResponseCard and RecommendationCard components 
-                      also have dark mode classes applied internally if they have hardcoded white backgrounds */}
-                  <SupportResponseCard support={support} />
-                  <RecommendationCard support={support} />
+                {/* 1. Text Recommendations */}
+                <div className="space-y-4">
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                    2. Your Personalized Action Plan
+                  </h2>
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    <SupportResponseCard support={support} />
+                    <RecommendationCard support={support} />
+                  </div>
                 </div>
+
+                {/* 2. YouTube Playlist Recommendations (New Section) */}
+                {support.youtubePlaylists && support.youtubePlaylists.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                        3. Curated Music & Audio Therapy
+                      </h2>
+                      <span className="flex h-6 items-center rounded-full bg-red-100 dark:bg-red-900/30 px-3 text-xs font-semibold text-red-600 dark:text-red-400">
+                        <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                        YouTube
+                      </span>
+                    </div>
+
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                      {support.youtubePlaylists.map((playlist, index) => (
+                        <a 
+                          key={index}
+                          href={playlist.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group relative flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-lg shadow-slate-200/50 dark:shadow-none hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                        >
+                          {/* Thumbnail */}
+                          <div className="relative aspect-video w-full overflow-hidden bg-slate-200 dark:bg-slate-700">
+                            <img 
+                              src={playlist.thumbnail} 
+                              alt={playlist.title}
+                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                            {/* Play Button Overlay */}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100 backdrop-blur-[2px]">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 shadow-lg">
+                                <svg className="ml-1 h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Title */}
+                          <div className="p-4 flex-1 flex flex-col justify-between">
+                            <h3 className="font-medium text-slate-800 dark:text-slate-200 line-clamp-2 text-sm leading-relaxed">
+                              {playlist.title}
+                            </h3>
+                            <p className="mt-3 text-xs font-semibold text-teal-600 dark:text-teal-400 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                              Listen Now →
+                            </p>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
               </div>
             )}
           </div>

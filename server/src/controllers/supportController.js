@@ -1,3 +1,4 @@
+const axios = require('axios');
 const SupportLog = require("../models/SupportLog");
 
 const recommendationMap = {
@@ -78,13 +79,66 @@ const supportMap = {
   neutral: "You seem emotionally steady. This could be a good time for reflection.",
 };
 
+// --- අලුත් Function එක: YouTube Playlists ගේන එක ---
+const fetchYouTubePlaylists = async (emotion) => {
+  try {
+    let searchQuery = 'relaxing lo-fi study music playlist'; // Default Search
+
+    // Pro-level therapeutic search queries (අගට playlist එකතු කරලා තියෙන්නේ)
+    const emotionQueryMap = {
+      joy: 'upbeat instrumental lo-fi chillhop happy mood playlist',
+      calm: '432Hz healing frequency relaxing nature sounds ambient playlist',
+      stress: 'weightless relaxing deep sleep stress relief instrumental playlist', 
+      anxiety: '528Hz anxiety relief deep healing meditation binaural beats playlist',
+      sadness: 'comforting warm ambient piano relaxing instrumental playlist',
+      anger: 'calming water sounds deep zen meditation music playlist',
+      fatigue: 'alpha waves brain focus energizing ambient music playlist',
+      love: 'soft acoustic guitar instrumental calm background playlist',
+      fear: 'grounding meditation root chakra healing sounds playlist',
+      disgust: 'cleansing aura positive energy ambient music playlist',
+      surprise: 'focus concentration calm lo-fi beats studying playlist',
+      neutral: 'chill lofi hip hop radio beats to relax study to playlist'
+    };
+
+    if (emotionQueryMap[emotion]) {
+      searchQuery = emotionQueryMap[emotion];
+    }
+
+    const youtubeUrl = `https://www.googleapis.com/youtube/v3/search`;
+    const response = await axios.get(youtubeUrl, {
+      params: {
+        part: 'snippet',
+        q: searchQuery,
+        type: 'playlist', // මෙතන 'video' වෙනුවට 'playlist' හැදුවා
+        maxResults: 4, // ගේන Playlist ගාණ 4යි
+        key: process.env.YOUTUBE_API_KEY
+      }
+    });
+
+    const playlists = response.data.items.map(item => ({
+      id: item.id.playlistId, // මෙතන videoId වෙනුවට playlistId හැදුවා
+      title: item.snippet.title,
+      thumbnail: item.snippet.thumbnails.high.url,
+      url: `https://www.youtube.com/playlist?list=${item.id.playlistId}` // Playlist URL එක හැදුවා
+    }));
+
+    return playlists;
+  } catch (error) {
+    console.error("YouTube API Error:", error.message);
+    return []; // Error එකක් ආවොත් හිස් Array එකක් යවනවා
+  }
+};
+
 const getSupportResponse = async (req, res) => {
   try {
     const { emotion, moodEntryId } = req.body;
 
-    const detectedEmotion = emotion || "neutral";
+    const detectedEmotion = emotion ? emotion.toLowerCase() : "neutral";
     const supportResponse = supportMap[detectedEmotion] || supportMap.neutral;
     const recommendations = recommendationMap[detectedEmotion] || recommendationMap.neutral;
+
+    // YouTube Playlists ටික අරගන්නවා
+    const recommendedPlaylists = await fetchYouTubePlaylists(detectedEmotion);
 
     const log = await SupportLog.create({
       user: req.user._id,
@@ -100,10 +154,12 @@ const getSupportResponse = async (req, res) => {
         detectedEmotion,
         supportResponse,
         recommendations,
+        youtubePlaylists: recommendedPlaylists, // අලුතින් යවන YouTube Data එක (Playlists)
         log,
       },
     });
   } catch (error) {
+    console.error("Support Generation Error:", error);
     res.status(500).json({ message: "Support generation failed", error: error.message });
   }
 };

@@ -1,11 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
 import { useAuth } from "../context/AuthContext";
 
+// 🚨 PDF හදන්න අවශ්‍ය Libraries
+import { jsPDF } from "jspdf";
+import { toPng } from "html-to-image";
+
 const SystemReportsPage = () => {
   const { user, logout, isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
+  
+  // 🚨 PDF එක Download වෙද්දී Loading පෙන්නන්න සහ Content එක අල්ලගන්න
+  const [isDownloading, setIsDownloading] = useState(false);
+  const reportRef = useRef(null);
 
   // බොරුවට (Mock) Loading එකක් පෙන්නන්න හදපු එකක්
   useEffect(() => {
@@ -14,6 +22,40 @@ const SystemReportsPage = () => {
     }, 800);
     return () => clearTimeout(timer);
   }, []);
+
+  // 🚨 PDF Generate කරන Function එක
+  const handleDownloadPDF = async () => {
+    if (!reportRef.current) return;
+
+    try {
+      setIsDownloading(true);
+      
+      // html-to-image මගින් DOM එක පින්තූරයක් බවට පත් කිරීම
+      const dataUrl = await toPng(reportRef.current, {
+        quality: 1.0,
+        pixelRatio: 2, // Quality එක වැඩි කිරීමට
+        backgroundColor: document.documentElement.classList.contains('dark') ? '#0f172a' : '#f8fafc',
+      });
+      
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      
+      // පින්තූරයේ අනුපාතය (Ratio) අනුව උස ගණනය කිරීම
+      const imgProps = pdf.getImageProperties(dataUrl);
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      // A4 පිටුවේ පින්තූරය තැබීම
+      pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
+      
+      pdf.save("MindTuneX_System_Report.pdf");
+      
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Failed to download PDF. See console for details.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-slate-50 transition-colors duration-300 dark:bg-slate-950">
@@ -44,8 +86,23 @@ const SystemReportsPage = () => {
                   <button className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/50">
                     📅 Last 30 Days
                   </button>
-                  <button className="flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600">
-                    <span>📥</span> Export PDF
+                  
+                  {/* 🚨 Download Button එකට onClick එක සම්බන්ධ කළා */}
+                  <button 
+                    onClick={handleDownloadPDF}
+                    disabled={isDownloading || loading}
+                    className="flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isDownloading ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <span>📥</span> Export PDF
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -58,7 +115,8 @@ const SystemReportsPage = () => {
                 <p className="mt-4 text-sm font-medium text-slate-500 dark:text-slate-400">Generating reports...</p>
               </div>
             ) : (
-              <div className="space-y-6">
+              // 🚨 PDF එකට ගන්න ඕන කෑල්ල අල්ලගන්න ref={reportRef} මෙතනට දැම්මා
+              <div ref={reportRef} className="space-y-6 p-2">
                 
                 {/* Top Metrics Cards */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

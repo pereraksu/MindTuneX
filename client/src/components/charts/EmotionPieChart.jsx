@@ -21,21 +21,23 @@ const EmotionPieChart = ({ insight }) => {
   // Empty state
   if (data.length === 0) {
     return (
-      <div className="rounded-3xl bg-white/70 backdrop-blur-xl border border-white/60 shadow-xl shadow-sky-100/50 p-8 flex h-80 flex-col items-center justify-center text-slate-400">
+      // 🚨 Dark Mode Background එකතු කළා
+      <div className="rounded-3xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl border border-white/60 dark:border-slate-700 shadow-xl shadow-sky-100/50 dark:shadow-none p-8 flex h-80 flex-col items-center justify-center text-slate-400 transition-colors">
         <span className="mb-4 text-6xl opacity-30">🥧</span>
-        <p className="text-sm font-medium">No emotion data yet</p>
-        <p className="mt-1 text-xs text-slate-400">Log a few moods to see the distribution</p>
+        <p className="text-sm font-medium dark:text-slate-300">No emotion data yet</p>
+        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Log a few moods to see the distribution</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-3xl bg-white/70 backdrop-blur-xl border border-white/60 shadow-xl shadow-sky-100/50 p-6 lg:p-8">
-      <h2 className="mb-6 text-sm font-semibold uppercase tracking-widest text-slate-400">
+    // 🚨 Dark Mode Background එකතු කළා
+    <div className="rounded-3xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl border border-white/60 dark:border-slate-700 shadow-xl shadow-sky-100/50 dark:shadow-none p-6 lg:p-8 transition-colors">
+      <h2 className="mb-6 text-sm font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
         Emotion Distribution
       </h2>
 
-      <div className="h-85 w-full">
+      <div className="h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -56,16 +58,21 @@ const EmotionPieChart = ({ insight }) => {
               ))}
             </Pie>
 
+            {/* 🚨 Tooltip එක Dark Theme එකට ගැලපෙන්න හැදුවා */}
             <Tooltip
               contentStyle={{
-                backgroundColor: "rgba(255,255,255,0.95)",
+                backgroundColor: "rgba(15, 23, 42, 0.9)", // Dark Slate Color
+                color: "#f8fafc", // White text
                 border: "none",
                 borderRadius: "16px",
-                boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+                boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.5)",
                 padding: "12px 16px",
+                backdropFilter: "blur(8px)"
               }}
+              itemStyle={{ color: "#38bdf8" }} // Sky blue for item values
             />
 
+            {/* 🚨 Legend අකුරු වල පාට formatter එකකින් හැදුවා */}
             <Legend
               verticalAlign="bottom"
               height={50}
@@ -73,8 +80,8 @@ const EmotionPieChart = ({ insight }) => {
               wrapperStyle={{
                 fontSize: "13px",
                 paddingTop: "15px",
-                color: "#475569",
               }}
+              formatter={(value) => <span className="text-slate-500 dark:text-slate-300">{value}</span>}
             />
           </PieChart>
         </ResponsiveContainer>
