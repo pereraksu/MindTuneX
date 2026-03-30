@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-// 🚨 අලුතින් import කළා
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
 import { useAuth } from "../context/AuthContext";
 import { predictMoodApi, saveMoodApi } from "../api/moodApi";
+
+// 🚨 අලුතින් හදපු Modal එක Import කරගත්තා
+import CrisisAlertModal from "../components/common/CrisisAlertModal";
 
 const EMOTION_EMOJI = {
   joy: "😄", calm: "😌", stress: "😤", anxiety: "😰",
@@ -42,7 +44,6 @@ const QUICK_INPUTS = [
 ];
 
 function MoodAnalysis() {
-  // 🚨 useAuth එක එකතු කළා
   const { user, logout, isAdmin } = useAuth();
   
   const [text, setText] = useState("");
@@ -50,6 +51,9 @@ function MoodAnalysis() {
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+
+  // 🚨 Modal එක පෙන්වනවද නැද්ද කියලා තීරණය කරන State එක
+  const [showCrisisAlert, setShowCrisisAlert] = useState(false);
 
   const charLimit = 500;
 
@@ -61,6 +65,18 @@ function MoodAnalysis() {
     try {
       const res = await predictMoodApi({ text });
       setResult(res.data); 
+
+      // 🚨 AI ප්‍රතිඵලය අනුව Modal එක Trigger කිරීම
+      const predictedEmotion = res.data.predictedEmotion?.toLowerCase();
+      const isNegative = res.data.sentimentLabel?.toLowerCase() === "negative";
+
+      if (["fear", "sadness", "stress", "anxiety"].includes(predictedEmotion) && isNegative) {
+        // තත්පර බාගයක් පරක්කු කරලා Modal එක පෙන්වනවා ලස්සනට
+        setTimeout(() => {
+          setShowCrisisAlert(true);
+        }, 500);
+      }
+
     } catch (err) {
       setError(err?.response?.data?.message || "Analysis failed. Please try again.");
     } finally {
@@ -76,7 +92,7 @@ function MoodAnalysis() {
         predictedEmotion: result.predictedEmotion,
         sentimentLabel: result.sentimentLabel,
         confidence: result.confidence,
-        source: "analysis" // 🚨 Source එක එකතු කළා
+        source: "analysis"
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -90,14 +106,14 @@ function MoodAnalysis() {
     setText("");
     setResult(null);
     setError("");
+    setShowCrisisAlert(false); // Clear කරද්දී Modal එකත් වහනවා
   };
 
   return (
-    // 🚨 Main Layout - Sidebar & Navbar එකතු කරලා තියෙන්නේ
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-sky-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-sky-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300 relative">
       <Sidebar />
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col relative z-0">
         <Navbar user={user} onLogout={logout} isAdmin={isAdmin} />
 
         <main className="flex-1 overflow-y-auto p-6 lg:p-10">
@@ -211,11 +227,16 @@ function MoodAnalysis() {
           </div>
         </main>
       </div>
+
+      {/* 🚨 Modal Component එක Render වෙන තැන (z-index වැඩි නිසා හැමදේටම උඩින් පේනවා) */}
+      <CrisisAlertModal 
+        isOpen={showCrisisAlert} 
+        onClose={() => setShowCrisisAlert(false)} 
+      />
     </div>
   );
 }
 
-// 🚨 ResultPanel එකේ වෙනසක් කරලා නැහැ, ඔයාගේ පරණ එකමයි
 const ResultPanel = ({ result }) => {
   const emoKey = result.predictedEmotion || "neutral";
   const emoji = EMOTION_EMOJI[emoKey] || "😐";

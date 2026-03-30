@@ -12,6 +12,8 @@ import SentimentTrendChart from "../components/charts/SentimentTrendChart";
 
 import MoodCheckIn from "../components/dashboard/MoodCheckIn";
 import AIRecommendationCard from "../components/dashboard/AIRecommendationCard";
+// 🚨 Badges Component එක Import කරගත්තා
+import BadgesCard from "../components/dashboard/BadgesCard";
 
 const EMOTION_EMOJI = {
   joy: "😄",
@@ -305,100 +307,108 @@ const DashboardPage = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-              <div className="xl:col-span-2 rounded-3xl border border-white/60 bg-white/70 p-8 shadow-xl shadow-sky-100/50 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/70 dark:shadow-none">
-                <div className="text-left">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-400">
-                    Weekly Wellness Summary
-                  </p>
+              {/* 🚨 වම් පැත්තේ තීරුව (Left Column wrapper) */}
+              <div className="xl:col-span-2 flex flex-col gap-0">
+                {/* Weekly Wellness Summary Card */}
+                <div className="rounded-3xl border border-white/60 bg-white/70 p-8 shadow-xl shadow-sky-100/50 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/70 dark:shadow-none">
+                  <div className="text-left">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-400">
+                      Weekly Wellness Summary
+                    </p>
 
-                  <h3 className="mt-2 text-2xl font-semibold text-slate-800 dark:text-white">
-                    Your emotional wellness at a glance
-                  </h3>
+                    <h3 className="mt-2 text-2xl font-semibold text-slate-800 dark:text-white">
+                      Your emotional wellness at a glance
+                    </h3>
 
-                  <p className="mt-2 text-slate-500 dark:text-slate-300">
-                    Here is a quick overview of how your week is going
-                    emotionally.
-                  </p>
+                    <p className="mt-2 text-slate-500 dark:text-slate-300">
+                      Here is a quick overview of how your week is going
+                      emotionally.
+                    </p>
 
-                  <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div className="rounded-2xl border border-sky-100 bg-sky-50 p-4 dark:border-slate-700 dark:bg-slate-800">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-400">
-                        Wellness Status
-                      </p>
-                      <p className="mt-2 text-xl font-semibold text-slate-800 dark:text-white">
-                        {wellnessLabel}
-                      </p>
+                    <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                      <div className="rounded-2xl border border-sky-100 bg-sky-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-400">
+                          Wellness Status
+                        </p>
+                        <p className="mt-2 text-xl font-semibold text-slate-800 dark:text-white">
+                          {wellnessLabel}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-400">
+                          Positive Entries
+                        </p>
+                        <p className="mt-2 text-xl font-semibold text-slate-800 dark:text-white">
+                          {positiveCount}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-400">
+                          Stress Signals
+                        </p>
+                        <p className="mt-2 text-xl font-semibold text-slate-800 dark:text-white">
+                          {stressCount}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 dark:border-slate-700 dark:bg-slate-800">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-400">
-                        Positive Entries
-                      </p>
-                      <p className="mt-2 text-xl font-semibold text-slate-800 dark:text-white">
-                        {positiveCount}
-                      </p>
-                    </div>
+                    <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div className="rounded-2xl border border-slate-200 bg-white/70 p-5 dark:border-slate-700 dark:bg-slate-800/80">
+                        <p className="text-sm font-semibold text-slate-700 dark:text-white">
+                          Insight Summary
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                          You have recorded{" "}
+                          <span className="font-semibold text-slate-800 dark:text-white">
+                            {totalEntries}
+                          </span>{" "}
+                          total entries. Your dominant emotional pattern appears to
+                          be{" "}
+                          <span className="font-semibold capitalize text-slate-800 dark:text-white">
+                            {topEmotion}
+                          </span>{" "}
+                          and your overall weekly sentiment suggests a{" "}
+                          <span className="font-semibold text-slate-800 dark:text-white">
+                            {String(wellnessLabel).toLowerCase()}
+                          </span>{" "}
+                          emotional state.
+                        </p>
+                      </div>
 
-                    <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 dark:border-slate-700 dark:bg-slate-800">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-400">
-                        Stress Signals
-                      </p>
-                      <p className="mt-2 text-xl font-semibold text-slate-800 dark:text-white">
-                        {stressCount}
-                      </p>
-                    </div>
-                  </div>
+                      <div className="rounded-2xl border border-slate-200 bg-white/70 p-5 dark:border-slate-700 dark:bg-slate-800/80">
+                        <p className="text-sm font-semibold text-slate-700 dark:text-white">
+                          Suggested Next Step
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                          {recommendationText}
+                        </p>
 
-                  <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="rounded-2xl border border-slate-200 bg-white/70 p-5 dark:border-slate-700 dark:bg-slate-800/80">
-                      <p className="text-sm font-semibold text-slate-700 dark:text-white">
-                        Insight Summary
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                        You have recorded{" "}
-                        <span className="font-semibold text-slate-800 dark:text-white">
-                          {totalEntries}
-                        </span>{" "}
-                        total entries. Your dominant emotional pattern appears to
-                        be{" "}
-                        <span className="font-semibold capitalize text-slate-800 dark:text-white">
-                          {topEmotion}
-                        </span>{" "}
-                        and your overall weekly sentiment suggests a{" "}
-                        <span className="font-semibold text-slate-800 dark:text-white">
-                          {String(wellnessLabel).toLowerCase()}
-                        </span>{" "}
-                        emotional state.
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-200 bg-white/70 p-5 dark:border-slate-700 dark:bg-slate-800/80">
-                      <p className="text-sm font-semibold text-slate-700 dark:text-white">
-                        Suggested Next Step
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                        {recommendationText}
-                      </p>
-
-                      <div className="mt-4 flex flex-wrap gap-3">
-                        <Link
-                          to="/journal"
-                          className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
-                        >
-                          Journal Now
-                        </Link>
-                        <Link
-                          to="/mood-analysis"
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
-                        >
-                          See Analysis
-                        </Link>
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          <Link
+                            to="/journal"
+                            className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
+                          >
+                            Journal Now
+                          </Link>
+                          <Link
+                            to="/mood-analysis"
+                            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
+                          >
+                            See Analysis
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
+
+                {/* 🚨 Badges Component එක මෙතනට එකතු කළා */}
+                <BadgesCard moods={moods} streak={journalingStreak} />
               </div>
 
+              {/* දකුණු පැත්තේ තීරුව (Recent Entries) */}
               <div className="rounded-3xl border border-white/60 bg-white/70 p-6 shadow-xl shadow-sky-100/50 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/70 dark:shadow-none">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <p className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-white">
