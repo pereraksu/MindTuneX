@@ -1,6 +1,9 @@
 const axios = require("axios");
 const MoodEntry = require("../models/MoodEntry");
 
+// 🚨 1. Encryption Helper එක Import කරගත්තා
+const { encryptText, decryptText } = require("../utils/encryptionUtil");
+
 const AI_SERVICE_URL = "http://127.0.0.1:8000/predict";
 
 const callAIService = async (text) => {
@@ -34,14 +37,13 @@ const quickMoodCheckIn = async (req, res) => {
       return res.status(400).json({ message: "Emotion value is required" });
     }
 
-    // Validation Error මගහැරීමට confidenceLevel පේළිය අයින් කරන ලදී
     const moodEntry = await MoodEntry.create({
       user: req.user._id,
       predictedEmotion: finalEmotion.toLowerCase(),
       source: "journal", 
-      inputText: inputText || `Quick check-in: ${finalEmotion}`,
+      // 🚨 2. Database එකට සේව් වෙන්න කලින් Encrypt කරනවා
+      inputText: encryptText(inputText || `Quick check-in: ${finalEmotion}`),
       confidence: confidence || 1,
-      // මෙතන confidenceLevel පාවිච්චි නොකර සේව් කරමු (Schema default value එක ගනීවි)
       sentimentLabel: sentimentLabel || (["joy", "calm", "love"].includes(finalEmotion.toLowerCase()) ? "positive" : "negative")
     });
 
@@ -68,12 +70,14 @@ const saveMoodEntry = async (req, res) => {
     const { text, source } = req.body;
     if (!text) return res.status(400).json({ message: "Text is required" });
 
+    // AI එකට යවන්නේ සාමාන්‍ය අකුරු (එතකොටයි AI එකට තේරෙන්නේ)
     const prediction = await callAIService(text);
 
     const moodEntry = await MoodEntry.create({
       user: req.user._id,
-      inputText: prediction.inputText,
-      cleanText: prediction.cleanText,
+      // 🚨 3. හැබැයි Database එකට සේව් කරන්නේ Encrypt කරලා!
+      inputText: encryptText(prediction.inputText || text),
+      cleanText: encryptText(prediction.cleanText),
       predictedEmotion: prediction.predictedEmotion,
       confidence: prediction.confidence,
       confidenceLevel: prediction.confidenceLevel,
@@ -103,10 +107,21 @@ const saveMoodEntry = async (req, res) => {
 const getMyMoodEntries = async (req, res) => {
   try {
     const moods = await MoodEntry.find({ user: req.user._id }).sort({ createdAt: -1 });
+
+    // 🚨 4. Frontend එකට යවන්න කලින් ආපහු Decrypt (සාමාන්‍ය අකුරු බවට පත්) කරනවා
+    const decryptedMoods = moods.map(mood => {
+      const moodObj = mood.toObject(); // Mongoose document එක JS object එකක් කරනවා
+      return {
+        ...moodObj,
+        inputText: decryptText(moodObj.inputText),
+        cleanText: decryptText(moodObj.cleanText)
+      };
+    });
+
     res.json({ 
       success: true,
       message: "Mood entries fetched successfully", 
-      data: moods 
+      data: decryptedMoods // 🚨 Decrypt කරපු එක Frontend එකට යවනවා
     });
   } catch (error) {
     res.status(500).json({ 

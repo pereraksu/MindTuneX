@@ -5,6 +5,7 @@ import App from "./App";
 import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import 'regenerator-runtime/runtime';
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
