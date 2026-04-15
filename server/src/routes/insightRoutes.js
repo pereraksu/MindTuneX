@@ -4,6 +4,10 @@ const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-router.get("/weekly", protect, getWeeklyInsights);
+// 🔒 Apply auth middleware globally
+router.use(protect);
+
+// 📊 Weekly Insights
+router.get("/weekly", getWeeklyInsights);
 
 module.exports = router;

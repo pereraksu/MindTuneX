@@ -1,42 +1,66 @@
 const JournalEntry = require("../models/JournalEntry");
 
+// --------------------------------------------------
+// Create Journal Entry
+// --------------------------------------------------
 const createJournalEntry = async (req, res) => {
   try {
-    const { title, content, moodEntry, tags } = req.body;
+    const { title, content, text, moodEntry, tags } = req.body;
 
-    if (!content) {
-      return res.status(400).json({ message: "Journal content is required" });
+    // frontend එකෙන් text එන්නත් පුළුවන්, content එන්නත් පුළුවන්
+    const finalContent = content || text;
+
+    if (!finalContent || !finalContent.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Journal content is required",
+      });
     }
 
     const journal = await JournalEntry.create({
       user: req.user._id,
       title: title || "",
-      content,
+      content: finalContent,
       moodEntry: moodEntry || null,
-      tags: tags || [],
+      tags: Array.isArray(tags) ? tags : [],
     });
 
     res.status(201).json({
+      success: true,
       message: "Journal entry created successfully",
       data: journal,
     });
   } catch (error) {
-    res.status(500).json({ message: "Create failed", error: error.message });
+    console.error("createJournalEntry error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Create failed",
+      error: error.message,
+    });
   }
 };
 
+// --------------------------------------------------
+// Get My Journal Entries
+// --------------------------------------------------
 const getMyJournalEntries = async (req, res) => {
   try {
     const journals = await JournalEntry.find({ user: req.user._id })
       .populate("moodEntry")
       .sort({ createdAt: -1 });
 
-    res.json({
+    res.status(200).json({
+      success: true,
       message: "Journal entries fetched successfully",
       data: journals,
     });
   } catch (error) {
-    res.status(500).json({ message: "Fetch failed", error: error.message });
+    console.error("getMyJournalEntries error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Fetch failed",
+      error: error.message,
+    });
   }
 };
 

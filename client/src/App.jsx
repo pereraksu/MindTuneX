@@ -1,8 +1,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
-// --- Pages (Public & User) ---
+// --- Public Pages ---
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+
+// --- User Pages ---
 import DashboardPage from "./pages/DashboardPage";
 import JournalPage from "./pages/JournalPage";
 import SupportPage from "./pages/SupportPage";
@@ -11,11 +13,11 @@ import ReportsPage from "./pages/ReportsPage";
 
 // --- Admin Pages ---
 import AdminDashboardPage from "./pages/AdminDashboardPage";
-import ManageUsersPage from "./pages/ManageUsersPage"; 
-import RiskAlertsPage from "./pages/RiskAlertsPage";   
-import SystemReportsPage from "./pages/SystemReportsPage"; // 🚀 අන්තිම පිටුවත් Import කළා
+import ManageUsersPage from "./pages/ManageUsersPage";
+import RiskAlertsPage from "./pages/RiskAlertsPage";
+import SystemReportsPage from "./pages/SystemReportsPage";
 
-// --- Components ---
+// --- User Feature Pages / Components ---
 import MoodHistory from "./components/mood/MoodHistory";
 import WeeklyInsightCard from "./components/mood/WeeklyInsightCard";
 
@@ -28,32 +30,53 @@ function App() {
   const { isAuthenticated, isAdmin, loading } = useAuth();
 
   if (loading) {
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 transition-colors duration-300 dark:bg-slate-950">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-sky-100 border-t-sky-600 dark:border-slate-700 dark:border-t-sky-400" />
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Loading MindTuneX...
+          </p>
+        </div>
+      </div>
+    );
   }
+
+  const homeRedirect = isAuthenticated
+    ? isAdmin
+      ? "/admin/dashboard"
+      : "/dashboard"
+    : "/login";
 
   return (
     <Routes>
-      {/* --- Root Redirect --- */}
+      {/* Root */}
+      <Route path="/" element={<Navigate to={homeRedirect} replace />} />
+
+      {/* Public Routes */}
       <Route
-        path="/"
+        path="/login"
         element={
           isAuthenticated ? (
-            isAdmin ? (
-              <Navigate to="/admin/dashboard" replace />
-            ) : (
-              <Navigate to="/dashboard" replace />
-            )
+            <Navigate to={homeRedirect} replace />
           ) : (
-            <Navigate to="/login" replace />
+            <LoginPage />
           )
         }
       />
 
-      {/* --- Public Routes --- */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      <Route
+        path="/register"
+        element={
+          isAuthenticated ? (
+            <Navigate to={homeRedirect} replace />
+          ) : (
+            <RegisterPage />
+          )
+        }
+      />
 
-      {/* --- User Routes --- */}
+      {/* User Routes */}
       <Route
         path="/dashboard"
         element={
@@ -62,6 +85,7 @@ function App() {
           </ProtectRoute>
         }
       />
+
       <Route
         path="/journal"
         element={
@@ -70,6 +94,7 @@ function App() {
           </ProtectRoute>
         }
       />
+
       <Route
         path="/support"
         element={
@@ -78,6 +103,7 @@ function App() {
           </ProtectRoute>
         }
       />
+
       <Route
         path="/mood-analysis"
         element={
@@ -86,6 +112,7 @@ function App() {
           </ProtectRoute>
         }
       />
+
       <Route
         path="/mood-history"
         element={
@@ -94,6 +121,7 @@ function App() {
           </ProtectRoute>
         }
       />
+
       <Route
         path="/insights"
         element={
@@ -102,6 +130,7 @@ function App() {
           </ProtectRoute>
         }
       />
+
       <Route
         path="/reports"
         element={
@@ -111,7 +140,7 @@ function App() {
         }
       />
 
-      {/* --- Admin Routes --- */}
+      {/* Admin Routes */}
       <Route
         path="/admin/dashboard"
         element={
@@ -120,8 +149,7 @@ function App() {
           </AdminRoute>
         }
       />
-      
-      {/* 🚀 Manage Users Route */}
+
       <Route
         path="/admin/users"
         element={
@@ -131,7 +159,6 @@ function App() {
         }
       />
 
-      {/* 🚀 Risk Alerts Route */}
       <Route
         path="/admin/alerts"
         element={
@@ -141,7 +168,6 @@ function App() {
         }
       />
 
-      {/* 🚀 System Reports Route (අලුත් පිටුවට යවයි) */}
       <Route
         path="/admin/reports"
         element={
@@ -151,9 +177,11 @@ function App() {
         }
       />
 
-      {/* --- Fallback Redirects --- */}
+      {/* Short redirect */}
       <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to={homeRedirect} replace />} />
     </Routes>
   );
 }

@@ -1,25 +1,47 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { getMeApi, loginUserApi, registerUserApi } from "../api/authApi";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
+
+const extractUser = (responseData) => {
+  if (!responseData) return null;
+  return responseData.user || responseData.data?.user || responseData.data || responseData;
+};
+
+const isUserAdmin = (user) => {
+  if (!user) return false;
+
+  const role = user.role || user.user?.role;
+  if (typeof role === "string" && role.toLowerCase() === "admin") return true;
+
+  if (user.isAdmin === true || user.user?.isAdmin === true) return true;
+
+  return false;
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ─── පද්ධතියට ඇතුළු වූ පරිශීලකයාගේ දත්ත ලබා ගැනීම ───
+  // ─── Load current logged-in user ───
   const loadUser = async () => {
     try {
       const token = localStorage.getItem("token");
+
       if (!token) {
-        setLoading(false);
+        setUser(null);
         return;
       }
 
-      const res = await getMeApi(token);
-      
-      // Backend එකෙන් එන data structure එක අනුව userData සකස් කිරීම
-      const userData = res.data?.user || res.data;
+      const res = await getMeApi();
+      const userData = extractUser(res?.data);
+
+      if (!userData) {
+        localStorage.removeItem("token");
+        setUser(null);
+        return;
+      }
+
       setUser(userData);
     } catch (error) {
       console.error("Failed to load user:", error);
@@ -34,71 +56,85 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, []);
 
-  // ─── Register Logic ───
+  // ─── Register ───
   const register = async (formData) => {
     const res = await registerUserApi(formData);
-    if (res.data?.token) {
-      localStorage.setItem("token", res.data.token);
-      const userData = res.data?.user || res.data;
+    const responseData = res?.data;
+
+    if (responseData?.token) {
+      localStorage.setItem("token", responseData.token);
+    }
+
+    const userData = extractUser(responseData);
+    if (userData) {
       setUser(userData);
     }
-    return res.data;
+
+    return responseData;
   };
 
-  // ─── Login Logic ───
+  // ─── Login ───
   const login = async (formData) => {
     const res = await loginUserApi(formData);
-    if (res.data?.token) {
-      localStorage.setItem("token", res.data.token);
-      const userData = res.data?.user || res.data;
+    const responseData = res?.data;
+
+    if (responseData?.token) {
+      localStorage.setItem("token", responseData.token);
+    }
+
+    const userData = extractUser(responseData);
+    if (userData) {
       setUser(userData);
     }
-    return res.data;
+
+    return responseData;
   };
 
-  // ─── Logout Logic ───
+  // ─── Logout ───
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
   };
 
-  // ─── Admin Check Logic ───
-  const checkAdminStatus = () => {
-    if (!user) return false;
-    const role = user.role || user.user?.role;
-    if (role && role.toLowerCase() === "admin") return true;
-    if (user.isAdmin === true || user.user?.isAdmin === true) return true;
-    return false;
-  };
+  const value = useMemo(
+    () => ({
+      user,
+      loading,
+      register,
+      login,
+      logout,
+      loadUser,
+      isAuthenticated: !!user,
+      isAdmin: isUserAdmin(user),
+    }),
+    [user, loading]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        register,
-        login,
-        logout,
-        isAuthenticated: !!user,
-        isAdmin: checkAdminStatus(),
-      }}
-    >
-      {!loading ? children : (
-        <div className="flex min-h-screen items-center justify-center bg-slate-50">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-100 border-t-sky-600"></div>
+    <AuthContext.Provider value={value}>
+      {!loading ? (
+        children
+      ) : (
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 transition-colors duration-300 dark:bg-slate-950">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-100 border-t-sky-600 dark:border-slate-700 dark:border-t-sky-400" />
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+              Loading your session...
+            </p>
+          </div>
         </div>
       )}
     </AuthContext.Provider>
   );
 };
 
-// 🚀 මෙන්න මෙතන තමයි fix එක තියෙන්නේ. 
-// ESLint warning එක අයින් කරන්න මේ line එක අනිවාර්යයි:
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
+
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
+
   return context;
 };

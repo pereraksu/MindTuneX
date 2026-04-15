@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-import 'regenerator-runtime/runtime';
+import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
+import "regenerator-runtime/runtime";
 
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
@@ -8,44 +8,83 @@ import { useAuth } from "../context/AuthContext";
 import { predictMoodApi, saveMoodApi } from "../api/moodApi";
 import CrisisAlertModal from "../components/common/CrisisAlertModal";
 
-// 🚨 මූඩ් අනුව නිර්දේශිත වීඩියෝ
+// Mood-based suggested videos
 const MOOD_SUGGESTIONS = {
   joy: {
     title: "Keep the vibe going!",
     videoUrl: "https://www.youtube.com/embed/ZbZSe6N_BXs",
-    desc: "Listen to some upbeat music to celebrate your joyful mood."
+    desc: "Listen to some upbeat music to celebrate your joyful mood.",
   },
   sadness: {
     title: "It's okay to feel this way",
     videoUrl: "https://www.youtube.com/embed/lFcSrYw-ARY",
-    desc: "Here is some soothing music to help you feel comforted."
+    desc: "Here is some soothing music to help you feel comforted.",
   },
   stress: {
     title: "Let's de-stress together",
     videoUrl: "https://www.youtube.com/embed/5qap5aO4i9A",
-    desc: "Take a break with these calming lo-fi beats."
+    desc: "Take a break with these calming lo-fi beats.",
   },
   anxiety: {
     title: "Breathe in, breathe out",
     videoUrl: "https://www.youtube.com/embed/86m4RLZ61PPs",
-    desc: "Listen to this guided breathing exercise to calm your mind."
+    desc: "Listen to this guided breathing exercise to calm your mind.",
   },
   calm: {
     title: "Stay in your zen zone",
     videoUrl: "https://www.youtube.com/embed/m5U90y_HkL8",
-    desc: "Perfect time for some nature sounds to stay relaxed."
+    desc: "Perfect time for some nature sounds to stay relaxed.",
   },
   neutral: {
     title: "A little spark for your day",
     videoUrl: "https://www.youtube.com/embed/7NOSDKb0HlU",
-    desc: "Some light background music for your daily tasks."
-  }
+    desc: "Some light background music for your daily tasks.",
+  },
+  anger: {
+    title: "Cool down gently",
+    videoUrl: "https://www.youtube.com/embed/2OEL4P1Rz04",
+    desc: "Slow calming audio to help release tension.",
+  },
+  fatigue: {
+    title: "Take a soft pause",
+    videoUrl: "https://www.youtube.com/embed/1ZYbU82GVz4",
+    desc: "Gentle sounds for low-energy moments.",
+  },
+  love: {
+    title: "Stay in the warm moment",
+    videoUrl: "https://www.youtube.com/embed/rtOvBOTyX00",
+    desc: "A soft uplifting track to match your warm mood.",
+  },
+  fear: {
+    title: "Ground yourself safely",
+    videoUrl: "https://www.youtube.com/embed/ZToicYcHIOU",
+    desc: "Use this calming audio to feel more grounded.",
+  },
+  disgust: {
+    title: "Reset your mind",
+    videoUrl: "https://www.youtube.com/embed/lTRiuFIWV54",
+    desc: "A light reset to help shift your focus.",
+  },
+  surprise: {
+    title: "Take in the moment",
+    videoUrl: "https://www.youtube.com/embed/cyOkMZV7J1Y",
+    desc: "Reflect and settle into the unexpected.",
+  },
 };
 
 const EMOTION_EMOJI = {
-  joy: "😄", calm: "😌", stress: "😤", anxiety: "😰",
-  sadness: "😢", anger: "😡", fatigue: "😴", love: "🥰",
-  fear: "😨", disgust: "🤢", surprise: "😲", neutral: "😐",
+  joy: "😄",
+  calm: "😌",
+  stress: "😤",
+  anxiety: "😰",
+  sadness: "😢",
+  anger: "😡",
+  fatigue: "😴",
+  love: "🥰",
+  fear: "😨",
+  disgust: "🤢",
+  surprise: "😲",
+  neutral: "😐",
 };
 
 const EMOTION_COLORS = {
@@ -69,22 +108,30 @@ const SENTIMENT_COLORS = {
   neutral: "bg-slate-100 text-slate-600",
 };
 
+// 12 Emotion Quick Inputs
 const QUICK_INPUTS = [
-  { label: "😤 Stressed", text: "I feel really stressed about my deadlines and assignments" },
+  { label: "😄 Joy", text: "I feel so happy and excited today" },
   { label: "😌 Calm", text: "I feel peaceful and calm after my morning meditation" },
-  { label: "😰 Anxious", text: "I am feeling anxious and nervous about tomorrow" },
-  { label: "😴 Exhausted", text: "I am completely exhausted and drained after studying all night" },
-  { label: "😄 Happy", text: "I finally completed my react project today!" },
-  { label: "😢 Sad", text: "I feel sad and lonely, nothing is going right" },
+  { label: "😤 Stress", text: "I feel really stressed about my deadlines and assignments" },
+  { label: "😰 Anxiety", text: "I am feeling anxious and nervous about tomorrow" },
+  { label: "😢 Sadness", text: "I feel sad and lonely, nothing is going right" },
+  { label: "😡 Anger", text: "I am angry and frustrated about what happened" },
+  { label: "😴 Fatigue", text: "I am completely exhausted and drained after studying all night" },
+  { label: "🥰 Love", text: "I feel full of love and warmth when I think about my family" },
+  { label: "😨 Fear", text: "I feel scared and fearful about the future" },
+  { label: "🤢 Disgust", text: "I feel disgusted and uncomfortable after seeing that" },
+  { label: "😲 Surprise", text: "I am really surprised and shocked by this unexpected event" },
+  { label: "😐 Neutral", text: "I feel normal, nothing special happened today" },
 ];
 
 function MoodAnalysis() {
   const { user, logout, isAdmin } = useAuth();
+
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [error, setError] = useState(""); // 🚨 'error' දැන් UI එකේ පාවිච්චි වෙනවා
+  const [error, setError] = useState("");
   const [showCrisisAlert, setShowCrisisAlert] = useState(false);
 
   const charLimit = 500;
@@ -93,7 +140,7 @@ function MoodAnalysis() {
     transcript,
     listening,
     resetTranscript,
-    browserSupportsSpeechRecognition
+    browserSupportsSpeechRecognition,
   } = useSpeechRecognition();
 
   useEffect(() => {
@@ -113,15 +160,25 @@ function MoodAnalysis() {
 
   const handleAnalyze = async () => {
     if (!text.trim()) return;
+
     setError("");
     setLoading(true);
+    setSaved(false);
+    setResult(null);
 
     try {
-      const res = await predictMoodApi({ text });
-      setResult(res.data); 
+      const prediction = await predictMoodApi({ text });
 
-      const predictedEmotion = res.data.predictedEmotion?.toLowerCase();
-      const isNegative = res.data.sentimentLabel?.toLowerCase() === "negative";
+      console.log("Prediction:", prediction);
+
+      if (!prediction || !prediction.predictedEmotion) {
+        throw new Error("Invalid prediction response");
+      }
+
+      setResult(prediction);
+
+      const predictedEmotion = prediction.predictedEmotion?.toLowerCase();
+      const isNegative = prediction.sentimentLabel?.toLowerCase() === "negative";
 
       if (["fear", "sadness", "stress", "anxiety"].includes(predictedEmotion) && isNegative) {
         setTimeout(() => {
@@ -129,7 +186,13 @@ function MoodAnalysis() {
         }, 500);
       }
     } catch (err) {
-      setError(err?.response?.data?.message || "Analysis failed. Please try again.");
+      console.error("Prediction error:", err);
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Analysis failed. Please try again."
+      );
+      setResult(null);
     } finally {
       setLoading(false);
     }
@@ -137,18 +200,20 @@ function MoodAnalysis() {
 
   const handleSave = async () => {
     if (!result) return;
+
     try {
       await saveMoodApi({
-        text: text,
+        text,
         predictedEmotion: result.predictedEmotion,
         sentimentLabel: result.sentimentLabel,
         confidence: result.confidence,
-        source: "analysis"
+        source: "analysis",
       });
+
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
-      console.error(err);
+      console.error("Save error:", err);
       setError("Failed to save. Please try again.");
     }
   };
@@ -157,6 +222,7 @@ function MoodAnalysis() {
     setText("");
     setResult(null);
     setError("");
+    setSaved(false);
     setShowCrisisAlert(false);
     resetTranscript();
   };
@@ -166,7 +232,6 @@ function MoodAnalysis() {
   }
 
   return (
-    // 🎨 Tailwind Suggestion: bg-linear-to-br
     <div className="flex min-h-screen bg-linear-to-br from-slate-50 to-sky-50 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300 relative">
       <Sidebar />
 
@@ -177,7 +242,10 @@ function MoodAnalysis() {
           <div className="mx-auto max-w-3xl">
             <div className="mb-8 text-left">
               <h1 className="font-serif text-4xl font-semibold tracking-tight text-slate-800 dark:text-white">
-                Mood <span className="text-transparent bg-clip-text bg-linear-to-r from-teal-500 to-sky-600">Analysis</span>
+                Mood{" "}
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-teal-500 to-sky-600">
+                  Analysis
+                </span>
               </h1>
               <p className="mt-2 text-slate-500 dark:text-slate-400">
                 Describe how you feel — use your <b>voice</b> or type below.
@@ -186,12 +254,18 @@ function MoodAnalysis() {
 
             <div className="rounded-3xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl border border-white/60 dark:border-slate-700 shadow-2xl p-8 transition-colors duration-300">
               <div className="mb-6">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Quick select</p>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
+                  Quick select
+                </p>
                 <div className="flex flex-wrap gap-2">
-                  {QUICK_INPUTS.map(({ label, text: t }) => (
+                  {QUICK_INPUTS.map(({ label, text: quickText }) => (
                     <button
                       key={label}
-                      onClick={() => { setText(t); setResult(null); setError(""); }}
+                      onClick={() => {
+                        setText(quickText);
+                        setResult(null);
+                        setError("");
+                      }}
                       className="rounded-full border border-sky-200 bg-white px-4 py-2 text-xs font-medium text-sky-600 transition hover:bg-sky-50 active:scale-95"
                     >
                       {label}
@@ -209,27 +283,34 @@ function MoodAnalysis() {
                   }}
                   rows={6}
                   placeholder={listening ? "Listening... speak now" : "How are you feeling right now?"}
-                  className={`w-full resize-none rounded-3xl border ${listening ? "border-teal-400 ring-2 ring-teal-100" : "border-sky-100"} bg-white/80 p-6 text-[0.95rem] focus:outline-none transition-all shadow-inner`}
+                  className={`w-full resize-none rounded-3xl border ${
+                    listening ? "border-teal-400 ring-2 ring-teal-100" : "border-sky-100"
+                  } bg-white/80 p-6 text-[0.95rem] focus:outline-none transition-all shadow-inner`}
                 />
-                
+
                 <button
                   type="button"
                   onClick={handleToggleListening}
                   className={`absolute bottom-6 right-16 flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 shadow-lg ${
-                    listening ? "bg-rose-500 text-white animate-pulse" : "bg-teal-500 text-white hover:bg-teal-600"
+                    listening
+                      ? "bg-rose-500 text-white animate-pulse"
+                      : "bg-teal-500 text-white hover:bg-teal-600"
                   }`}
                 >
                   {listening ? "🛑" : "🎤"}
                 </button>
 
-                <span className={`absolute bottom-6 right-6 font-mono text-xs ${text.length > charLimit * 0.85 ? "text-rose-400" : "text-slate-300"}`}>
+                <span
+                  className={`absolute bottom-6 right-6 font-mono text-xs ${
+                    text.length > charLimit * 0.85 ? "text-rose-400" : "text-slate-300"
+                  }`}
+                >
                   {text.length}/{charLimit}
                 </span>
               </div>
 
-              {/* 🚨 Error එක UI එකේ පෙන්වීම */}
               {error && (
-                <div className="mt-4 p-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl text-sm animate-pulse">
+                <div className="mt-4 p-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl text-sm">
                   ⚠️ {error}
                 </div>
               )}
@@ -242,27 +323,38 @@ function MoodAnalysis() {
                 >
                   {loading ? "Analysing..." : "Analyse My Mood →"}
                 </button>
+
                 {result && (
                   <button
                     onClick={handleSave}
-                    className={`rounded-full border-2 px-8 font-bold ${saved ? "border-emerald-400 text-emerald-600" : "border-sky-300 text-sky-600"}`}
+                    className={`rounded-full border-2 px-8 font-bold ${
+                      saved ? "border-emerald-400 text-emerald-600" : "border-sky-300 text-sky-600"
+                    }`}
                   >
                     {saved ? "✓ Saved" : "Save Entry"}
                   </button>
                 )}
+
                 {(text || result) && (
-                  <button onClick={handleClear} className="rounded-full border px-6 text-slate-400">Clear</button>
+                  <button
+                    onClick={handleClear}
+                    className="rounded-full border px-6 text-slate-400"
+                  >
+                    Clear
+                  </button>
                 )}
               </div>
             </div>
 
             {result && <ResultPanel result={result} />}
-
           </div>
         </main>
       </div>
 
-      <CrisisAlertModal isOpen={showCrisisAlert} onClose={() => setShowCrisisAlert(false)} />
+      <CrisisAlertModal
+        isOpen={showCrisisAlert}
+        onClose={() => setShowCrisisAlert(false)}
+      />
     </div>
   );
 }
@@ -272,7 +364,8 @@ const ResultPanel = ({ result }) => {
   const emoji = EMOTION_EMOJI[emoKey] || "😐";
   const emoClass = EMOTION_COLORS[emoKey] || "bg-slate-100";
   const sentClass = SENTIMENT_COLORS[result.sentimentLabel] || "bg-slate-100";
-  const confPct = Math.round((result.confidence || 0) * 100);
+  const confPct =
+    result.confidencePercentage || Math.round((result.confidence || 0) * 100);
 
   const suggestion = MOOD_SUGGESTIONS[emoKey] || MOOD_SUGGESTIONS["neutral"];
 
@@ -282,11 +375,18 @@ const ResultPanel = ({ result }) => {
         <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white text-6xl shadow-xl border border-slate-50">
           {emoji}
         </div>
+
         <div>
-          <p className="text-4xl font-bold capitalize text-slate-800 dark:text-white">{emoKey}</p>
+          <p className="text-4xl font-bold capitalize text-slate-800 dark:text-white">
+            {emoKey}
+          </p>
           <div className="flex flex-wrap items-center gap-2 mt-3">
-            <span className={`rounded-full border px-4 py-1 text-xs font-bold ${emoClass}`}>{confPct}% confidence</span>
-            <span className={`rounded-full px-4 py-1 text-xs font-bold ${sentClass}`}>{result.sentimentLabel}</span>
+            <span className={`rounded-full border px-4 py-1 text-xs font-bold ${emoClass}`}>
+              {confPct}% confidence
+            </span>
+            <span className={`rounded-full px-4 py-1 text-xs font-bold ${sentClass}`}>
+              {result.sentimentLabel}
+            </span>
           </div>
         </div>
       </div>
@@ -296,8 +396,11 @@ const ResultPanel = ({ result }) => {
           <span className="text-xl">🎶</span>
           <h4 className="font-bold text-slate-800 dark:text-white">{suggestion.title}</h4>
         </div>
-        <p className="mb-5 text-sm text-slate-500 dark:text-slate-400">{suggestion.desc}</p>
-        
+
+        <p className="mb-5 text-sm text-slate-500 dark:text-slate-400">
+          {suggestion.desc}
+        </p>
+
         <div className="overflow-hidden rounded-2xl shadow-xl aspect-video bg-slate-100">
           <iframe
             width="100%"
@@ -307,7 +410,7 @@ const ResultPanel = ({ result }) => {
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-          ></iframe>
+          />
         </div>
       </div>
     </div>

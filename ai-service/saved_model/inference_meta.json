@@ -4,23 +4,17 @@
     "nothing much",
     "just normal",
     "ordinary day",
-    "regular day",
-    "do not feel anything",
     "feel okay",
-    "just okay",
-    "neither happy nor sad",
     "normal day",
-    "pretty standard",
-    "not strongly emotional",
-    "usual day",
-    "emotionally stable",
-    "just going through my day",
-    "just another day",
-    "no strong feelings",
-    "fairly ordinary",
-    "average day",
     "i am fine",
-    "i feel fine"
+    "just another day",
+    "i feel nothing",
+    "nothing at all",
+    "no strong feelings",
+    "i feel neutral",
+    "same as always",
+    "just the usual",
+    "nothing unusual"
   ],
   "explanation_keywords": {
     "joy": [
@@ -31,7 +25,9 @@
       "overjoyed",
       "wonderful",
       "glad",
-      "joyful"
+      "joyful",
+      "thrilled",
+      "fantastic"
     ],
     "calm": [
       "peaceful",
@@ -41,7 +37,8 @@
       "serene",
       "ease",
       "settled",
-      "grounded"
+      "grounded",
+      "tranquil"
     ],
     "stress": [
       "deadline",
@@ -50,7 +47,8 @@
       "stressed",
       "burden",
       "responsibilities",
-      "urgent"
+      "urgent",
+      "too much"
     ],
     "anxiety": [
       "nervous",
@@ -60,7 +58,9 @@
       "interview",
       "presentation",
       "exam",
-      "restless"
+      "restless",
+      "test",
+      "tomorrow"
     ],
     "sadness": [
       "heartbroken",
@@ -101,7 +101,8 @@
       "afraid",
       "scared",
       "fear",
-      "frightened"
+      "frightened",
+      "creepy"
     ],
     "disgust": [
       "disgusting",
@@ -136,7 +137,11 @@
       "meeting",
       "presentation",
       "interview",
-      "study"
+      "study",
+      "university",
+      "college",
+      "test",
+      "results"
     ],
     "family_relationship": [
       "family",
@@ -146,7 +151,9 @@
       "relationship",
       "partner",
       "wife",
-      "husband"
+      "husband",
+      "love",
+      "parents"
     ],
     "health_energy": [
       "tired",
@@ -156,7 +163,9 @@
       "drained",
       "exhausted",
       "energy",
-      "fatigue"
+      "fatigue",
+      "pain",
+      "sleepy"
     ],
     "daily_life": [
       "day",
@@ -166,12 +175,23 @@
       "routine",
       "today",
       "walk",
-      "meditation"
+      "meditation",
+      "food",
+      "music"
     ]
   },
-  "confidence_levels": {
-    "high": ">= 0.80",
-    "medium": "0.55 to 0.79",
-    "low": "< 0.55"
+  "emotion_polarity": {
+    "joy": 0.9,
+    "love": 0.85,
+    "calm": 0.7,
+    "surprise": 0.25,
+    "neutral": 0.0,
+    "fatigue": -0.4,
+    "anxiety": -0.65,
+    "stress": -0.7,
+    "fear": -0.75,
+    "anger": -0.75,
+    "disgust": -0.7,
+    "sadness": -0.8
   }
 }

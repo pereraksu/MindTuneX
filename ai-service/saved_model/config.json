@@ -1,4 +1,6 @@
 {
+  "model_name": "MindTuneX Emotion Classifier",
+  "version": "v7_final_manual_enhanced",
   "base_model": "distilbert-base-uncased",
   "num_labels": 12,
   "emotions": [
@@ -15,20 +17,6 @@
     "surprise",
     "neutral"
   ],
-  "emotion2id": {
-    "joy": 0,
-    "calm": 1,
-    "stress": 2,
-    "anxiety": 3,
-    "sadness": 4,
-    "anger": 5,
-    "fatigue": 6,
-    "love": 7,
-    "fear": 8,
-    "disgust": 9,
-    "surprise": 10,
-    "neutral": 11
-  },
   "id2emotion": {
     "0": "joy",
     "1": "calm",
@@ -45,41 +33,18 @@
   },
   "max_length": 128,
   "confidence_threshold": 0.4,
-  "best_epoch": 5,
-  "test_accuracy": 0.7293,
-  "test_f1_macro": 0.6545,
-  "test_f1_weighted": 0.7344,
-  "version": "final_enhanced_v5",
-  "model_type": "DistilBERT 12-class emotion classifier",
-  "features": {
-    "confidence_level": true,
-    "sentiment_label": true,
-    "recommendation_type": true,
-    "support_level": true,
-    "top3_predictions": true,
-    "trigger_category": true,
-    "explanation_keywords": true,
-    "post_processing_rules": true
+  "best_epoch": 8,
+  "test_results": {
+    "loss": 0.8979,
+    "accuracy": 0.802,
+    "f1_macro": 0.8303,
+    "f1_weighted": 0.8011
   },
-  "trigger_categories": [
-    "work_study",
-    "family_relationship",
-    "health_energy",
-    "daily_life",
-    "general"
-  ],
-  "recommendation_types": [
-    "maintain_positive_mood",
-    "warm_supportive_content",
-    "mindfulness_and_relaxation",
-    "stress_relief_content",
-    "calming_and_reassurance",
-    "comfort_and_support",
-    "cool_down_and_reflect",
-    "rest_and_low_energy_support",
-    "grounding_and_reassurance",
-    "distraction_and_reset",
-    "light_reflection_content",
-    "general_reflection_content"
+  "features": [
+    "emotion_classification",
+    "sentiment",
+    "trigger_detection",
+    "keyword_explainability",
+    "rule_based_postprocessing"
   ]
 }

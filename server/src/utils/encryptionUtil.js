@@ -1,26 +1,42 @@
 const CryptoJS = require("crypto-js");
 
-// .env එකෙන් key එක ගන්නවා
-const SECRET_KEY = process.env.ENCRYPTION_KEY || "fallback_secret_key";
+// 🔐 MUST use .env key (fallback only for dev)
+const SECRET_KEY = process.env.ENCRYPTION_KEY || "dev_fallback_key_change_me";
 
-// 1. Text එක Encrypt කරන (කියවන්න බැරි කරන) Function එක
+// --------------------------------------------------
+// 🔒 Encrypt Text
+// --------------------------------------------------
 const encryptText = (text) => {
-  if (!text) return text;
-  return CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
+  if (!text || typeof text !== "string") return text;
+
+  try {
+    const cipher = CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
+    return cipher;
+  } catch (error) {
+    console.error("Encryption error:", error.message);
+    return text;
+  }
 };
 
-// 2. Encrypt කරපු එක ආපහු සාමාන්‍ය අකුරු (Decrypt) කරන Function එක
+// --------------------------------------------------
+// 🔓 Decrypt Text
+// --------------------------------------------------
 const decryptText = (cipherText) => {
-  if (!cipherText) return cipherText;
+  if (!cipherText || typeof cipherText !== "string") return cipherText;
+
   try {
     const bytes = CryptoJS.AES.decrypt(cipherText, SECRET_KEY);
     const originalText = bytes.toString(CryptoJS.enc.Utf8);
-    
-    // පරණ (Encrypt නොකරපු) දත්ත තිබ්බොත් එරර් එන්නේ නැති වෙන්න
-    return originalText || cipherText; 
+
+    // 🔥 Handle old unencrypted data safely
+    return originalText || cipherText;
   } catch (error) {
+    console.error("Decryption error:", error.message);
     return cipherText;
   }
 };
 
-module.exports = { encryptText, decryptText };
+module.exports = {
+  encryptText,
+  decryptText,
+};

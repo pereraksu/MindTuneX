@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-// 🚨 Voice Recognition සඳහා අවශ්‍ය දේවල්
-import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-import 'regenerator-runtime/runtime';
-import { saveJournalApi } from "../../api/moodApi"; 
+import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
+import "regenerator-runtime/runtime";
+import { saveJournalApi } from "../../api/moodApi";
 
 const JournalForm = ({ onSaved }) => {
   const [title, setTitle] = useState("");
@@ -12,15 +11,16 @@ const JournalForm = ({ onSaved }) => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  // 🎤 Speech Recognition Logic
+  const charCount = content.length;
+  const maxSuggested = 1200;
+
   const {
     transcript,
     listening,
     resetTranscript,
-    browserSupportsSpeechRecognition
+    browserSupportsSpeechRecognition,
   } = useSpeechRecognition();
 
-  // මයික් එකෙන් අහන දේ Content එකට Update කිරීම
   useEffect(() => {
     if (transcript) {
       setContent(transcript);
@@ -52,130 +52,171 @@ const JournalForm = ({ onSaved }) => {
 
       await saveJournalApi({
         title,
-        text: content, 
+        text: content,
         tags: tagsArray,
-        source: "journal" 
+        source: "journal",
       });
 
       setTitle("");
       setContent("");
       setTags("");
-      resetTranscript(); // මයික් එකේ දත්තත් reset කරනවා
-      setMessage("Journal entry saved and analysed! ✨");
+      resetTranscript();
+      setMessage("Journal entry saved and analysed successfully.");
 
       if (onSaved) onSaved();
       setTimeout(() => setMessage(""), 3000);
-
     } catch (err) {
       console.error("Save error:", err);
-      setError(err?.response?.data?.message || "Failed to save journal. Is AI server running?");
+      setError(
+        err?.response?.data?.message ||
+          "Failed to save journal. Check whether the AI service is running."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   if (!browserSupportsSpeechRecognition) {
-    return <div className="text-center p-5 text-rose-500">Your browser does not support voice input.</div>;
+    return (
+      <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50 p-5 text-center text-sm text-rose-600 dark:border-rose-800/50 dark:bg-rose-900/20 dark:text-rose-400">
+        Your browser does not support voice input.
+      </div>
+    );
   }
 
   return (
-    <div className="flex items-center justify-center transition-colors duration-300">
-      <div className="w-full max-w-2xl">
-        
-        <div className="mb-6">
-          <h1 className="font-serif text-4xl font-semibold tracking-tight text-slate-800 dark:text-white transition-colors">
-            New <span className="text-transparent bg-clip-text bg-linear-to-r from-teal-500 to-sky-600 dark:from-teal-400 dark:to-sky-400">Journal Entry</span>
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 transition-colors italic">
-            Write or <b>speak</b> in English for the best AI analysis.
+    <div className="w-full">
+      <div className="mb-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
+          Journal Entry Form
+        </p>
+        <h2 className="mt-2 text-2xl font-semibold text-slate-800 dark:text-white">
+          Write your thoughts
+        </h2>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          You can type or use voice input in English for better AI mood analysis.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Title */}
+        <div>
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            Entry Title
+          </label>
+          <input
+            type="text"
+            placeholder="Give this reflection a short title..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full rounded-[1.5rem] border border-sky-100 bg-white/90 px-5 py-4 text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-teal-400 focus:ring-4 focus:ring-teal-100 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-200 dark:focus:border-teal-500 dark:focus:ring-teal-900/20"
+          />
+        </div>
+
+        {/* Content */}
+        <div>
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+              How are you feeling today?
+            </label>
+
+            <span
+              className={`text-xs font-medium ${
+                charCount > maxSuggested
+                  ? "text-rose-400"
+                  : "text-slate-400 dark:text-slate-500"
+              }`}
+            >
+              {charCount}/{maxSuggested}
+            </span>
+          </div>
+
+          <div className="relative">
+            <textarea
+              rows="9"
+              placeholder={
+                listening
+                  ? "Listening... speak now"
+                  : "Write your thoughts, emotions, experiences, or concerns here..."
+              }
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className={`w-full resize-none rounded-[1.75rem] border bg-white/90 p-6 pr-20 text-slate-700 outline-none transition-all placeholder:text-slate-400 ${
+                listening
+                  ? "border-teal-400 ring-4 ring-teal-100 dark:border-teal-500 dark:ring-teal-900/20"
+                  : "border-sky-100 focus:border-teal-400 focus:ring-4 focus:ring-teal-100 dark:border-slate-600 dark:focus:border-teal-500 dark:focus:ring-teal-900/20"
+              } dark:bg-slate-900/50 dark:text-slate-200`}
+              required
+            />
+
+            <button
+              type="button"
+              onClick={handleToggleListening}
+              className={`absolute bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg transition-all duration-300 ${
+                listening
+                  ? "bg-rose-500 animate-pulse scale-110"
+                  : "bg-teal-500 hover:bg-teal-600"
+              }`}
+              title={listening ? "Stop Listening" : "Start Voice Input"}
+            >
+              {listening ? "🛑" : "🎤"}
+            </button>
+          </div>
+
+          {listening && (
+            <p className="mt-3 text-center text-xs font-bold uppercase tracking-[0.22em] text-teal-600 animate-pulse dark:text-teal-400">
+              MindTuneX is listening...
+            </p>
+          )}
+        </div>
+
+        {/* Tags */}
+        <div>
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            Tags <span className="text-slate-300 dark:text-slate-600">(optional)</span>
+          </label>
+          <input
+            type="text"
+            placeholder="university, work, stress..."
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            className="w-full rounded-[1.5rem] border border-sky-100 bg-white/90 px-5 py-4 text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-teal-400 focus:ring-4 focus:ring-teal-100 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-200 dark:focus:border-teal-500 dark:focus:ring-teal-900/20"
+          />
+          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+            Separate tags with commas to categorize your entry.
           </p>
         </div>
 
-        <div className="rounded-3xl bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl border border-white/60 dark:border-slate-700 shadow-2xl shadow-sky-100/50 dark:shadow-none p-8 lg:p-10 transition-colors duration-300">
-          <form onSubmit={handleSubmit} className="space-y-7">
-            
-            <div>
-              <label className="block text-xs font-medium uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">
-                Entry Title
-              </label>
-              <input
-                type="text"
-                placeholder="Give your entry a title..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-2xl border border-sky-100 dark:border-slate-600 bg-white/80 dark:bg-slate-900/50 px-5 py-4 text-slate-700 dark:text-slate-200 placeholder:text-slate-400 outline-none focus:border-teal-400 dark:focus:border-teal-500 transition-all shadow-inner"
-              />
-            </div>
+        {/* Alerts */}
+        {message && (
+          <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-700 animate-in fade-in zoom-in-95 dark:border-emerald-800/50 dark:bg-emerald-900/20 dark:text-emerald-400">
+            <span>✅</span>
+            {message}
+          </div>
+        )}
 
-            <div className="relative">
-              <label className="block text-xs font-medium uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">
-                How are you feeling today?
-              </label>
-              <textarea
-                rows="7"
-                placeholder={listening ? "Listening... speak now" : "Write your thoughts here..."}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className={`w-full resize-none rounded-3xl border ${listening ? "border-teal-400 ring-2 ring-teal-100" : "border-sky-100 dark:border-slate-600"} bg-white/80 dark:bg-slate-900/50 p-6 text-slate-700 dark:text-slate-200 focus:outline-none transition-all shadow-inner`}
-                required
-              />
+        {error && (
+          <div className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 text-sm text-rose-700 animate-in fade-in zoom-in-95 dark:border-rose-800/50 dark:bg-rose-900/20 dark:text-rose-400">
+            <span>⚠️</span>
+            {error}
+          </div>
+        )}
 
-              {/* 🎤 Microphone Button */}
-              <button
-                type="button"
-                onClick={handleToggleListening}
-                className={`absolute bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full transition-all duration-300 shadow-lg ${
-                  listening 
-                  ? "bg-rose-500 text-white animate-pulse scale-110" 
-                  : "bg-teal-500 text-white hover:bg-teal-600"
-                }`}
-                title={listening ? "Stop Listening" : "Start Voice Input"}
-              >
-                {listening ? "🛑" : "🎤"}
-              </button>
-            </div>
+        {/* Submit */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-slate-400 dark:text-slate-500">
+            Your journal entry will be analysed to detect emotional signals and generate insights.
+          </p>
 
-            {listening && (
-              <p className="mt-[-20px] text-center text-xs font-bold text-teal-600 dark:text-teal-400 animate-pulse tracking-widest uppercase">
-                MindTuneX is listening...
-              </p>
-            )}
-
-            <div>
-              <label className="block text-xs font-medium uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">
-                Tags <span className="text-slate-300 dark:text-slate-600">(optional)</span>
-              </label>
-              <input
-                type="text"
-                placeholder="university, work, stress..."
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                className="w-full rounded-2xl border border-sky-100 dark:border-slate-600 bg-white/80 dark:bg-slate-900/50 px-5 py-4 text-slate-700 dark:text-slate-200 outline-none focus:border-teal-400 dark:focus:border-teal-500 transition-all shadow-inner"
-              />
-            </div>
-
-            {message && (
-              <div className="rounded-2xl bg-emerald-100/80 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 px-5 py-3 text-emerald-700 dark:text-emerald-400 text-sm flex items-center gap-2 animate-in fade-in zoom-in-95">
-                <span>✅</span> {message}
-              </div>
-            )}
-
-            {error && (
-              <div className="rounded-2xl bg-rose-100/80 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800/50 px-5 py-3 text-rose-700 dark:text-rose-400 text-sm flex items-center gap-2 animate-in fade-in zoom-in-95">
-                <span>⚠️</span> {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading || !content.trim()}
-              className="w-full rounded-3xl bg-linear-to-r from-teal-500 to-sky-600 py-4 text-lg font-medium text-white shadow-lg shadow-teal-200 dark:shadow-none transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 disabled:opacity-50"
-            >
-              {loading ? "Analysing Mood..." : "Save Journal Entry"}
-            </button>
-          </form>
+          <button
+            type="submit"
+            disabled={loading || !content.trim()}
+            className="rounded-3xl bg-gradient-to-r from-teal-500 to-sky-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-teal-200 transition-all hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-50 dark:shadow-none"
+          >
+            {loading ? "Analysing Mood..." : "Save Journal Entry"}
+          </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 };
