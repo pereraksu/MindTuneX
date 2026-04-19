@@ -123,6 +123,7 @@ const HighRiskEntries = ({ entries = [] }) => {
                     <span className="rounded-xl border border-sky-100 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-600 dark:border-sky-900/50 dark:bg-sky-900/20 dark:text-sky-400">
                       Confidence: {Math.round(entry.confidence * 100)}%
                     </span>
+                    
                   )}
                 </div>
 
