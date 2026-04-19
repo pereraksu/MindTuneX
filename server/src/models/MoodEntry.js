@@ -97,6 +97,14 @@ const moodEntrySchema = new mongoose.Schema(
       index: true,
     },
 
+    riskScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+      index: true,
+    },
+
     triggerCategory: {
       type: String,
       enum: [

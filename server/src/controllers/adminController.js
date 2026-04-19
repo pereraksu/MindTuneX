@@ -108,7 +108,12 @@ const getAdminUsers = async (req, res) => {
 // --------------------------------------------------
 const getHighRiskEntries = async (req, res) => {
   try {
-    const entries = await MoodEntry.find({ supportLevel: "high" })
+    const entries = await MoodEntry.find({
+  $or: [
+    { supportLevel: "high" },
+    { riskScore: { $gte: 75 } },
+  ],
+})
       .populate("user", "fullName email role")
       .sort({ createdAt: -1 });
 

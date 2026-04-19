@@ -2,9 +2,13 @@ const axios = require("axios");
 const MoodEntry = require("../models/MoodEntry");
 const JournalEntry = require("../models/JournalEntry");
 const { encryptText, decryptText } = require("../utils/encryptionUtil");
+const { calculateRiskScore } = require("../utils/riskAssessmentUtil");
 
 const AI_SERVICE_URL = "http://127.0.0.1:8000/predict";
 
+// --------------------------------------------------
+// Constants
+// --------------------------------------------------
 const ALLOWED_SOURCES = ["journal", "analysis", "quick_checkin", "support_page"];
 
 const POSITIVE_EMOTIONS = ["joy", "calm", "love", "surprise"];
@@ -17,37 +21,31 @@ const MODERATE_SUPPORT_EMOTIONS = ["fatigue", "disgust"];
 const normalizeSource = (source, fallback = "journal") => {
   if (!source) return fallback;
 
-  const cleanedSource = String(source)
+  const cleaned = String(source)
     .trim()
     .toLowerCase()
     .replace(/-/g, "_");
 
-  return ALLOWED_SOURCES.includes(cleanedSource) ? cleanedSource : fallback;
+  return ALLOWED_SOURCES.includes(cleaned) ? cleaned : fallback;
 };
 
 // --------------------------------------------------
-// Helper: Call FastAPI AI service
+// Helper: Call AI service
 // --------------------------------------------------
 const callAIService = async (text) => {
-  const response = await axios.post(AI_SERVICE_URL, { text });
-
-  if (response.data?.data) {
-    return response.data.data;
-  }
-
-  return response.data;
+  const res = await axios.post(AI_SERVICE_URL, { text });
+  return res.data?.data || res.data;
 };
 
 // --------------------------------------------------
-// Helper: Build fallback prediction if AI fails
+// Helper: Fallback prediction
 // --------------------------------------------------
-const buildFallbackPrediction = (text) => ({
+const fallbackPrediction = (text) => ({
   inputText: text,
   cleanText: text,
   rawPrediction: "neutral",
   predictedEmotion: "neutral",
   confidence: 0.5,
-  confidencePercentage: 50,
   confidenceLevel: "medium",
   sentimentScore: 0,
   sentimentLabel: "neutral",
@@ -55,22 +53,17 @@ const buildFallbackPrediction = (text) => ({
   supportLevel: "moderate",
   triggerCategory: "general",
   explanationKeywords: [],
-  top3Predictions: [
-    { emotion: "neutral", score: 0.5 },
-    { emotion: "calm", score: 0.3 },
-    { emotion: "sadness", score: 0.2 },
-  ],
+  top3Predictions: [],
 });
 
 // --------------------------------------------------
-// A. Prediction only
-// POST /api/moods/predict
+// A. Predict Only
 // --------------------------------------------------
 const predictMood = async (req, res) => {
   try {
     const { text } = req.body;
 
-    if (!text || !text.trim()) {
+    if (!text?.trim()) {
       return res.status(400).json({
         success: false,
         message: "Text is required",
@@ -79,28 +72,22 @@ const predictMood = async (req, res) => {
 
     const prediction = await callAIService(text);
 
-    if (!prediction || !prediction.predictedEmotion) {
-      return res.status(500).json({
-        success: false,
-        message: "Invalid AI response",
-      });
+    if (!prediction?.predictedEmotion) {
+      throw new Error("Invalid AI response");
     }
 
-    return res.status(200).json(prediction);
-  } catch (error) {
-    console.error("predictMood error:", error.message);
-
-    return res.status(500).json({
+    res.json(prediction);
+  } catch (err) {
+    console.error("predictMood:", err.message);
+    res.status(500).json({
       success: false,
       message: "Prediction failed",
-      error: error.message,
     });
   }
 };
 
 // --------------------------------------------------
-// B. Quick mood check-in
-// POST /api/moods/
+// B. Quick Check-in
 // --------------------------------------------------
 const quickMoodCheckIn = async (req, res) => {
   try {
@@ -113,184 +100,178 @@ const quickMoodCheckIn = async (req, res) => {
       confidence,
     } = req.body;
 
-    const finalEmotion = emotion || predictedEmotion;
+    const finalEmotion = (emotion || predictedEmotion)?.toLowerCase();
 
     if (!finalEmotion) {
       return res.status(400).json({
         success: false,
-        message: "Emotion value is required",
+        message: "Emotion is required",
       });
     }
 
-    const lowerEmotion = String(finalEmotion).toLowerCase();
-    const normalizedSource = normalizeSource(source, "quick_checkin");
+    const finalConfidence = typeof confidence === "number" ? confidence : 1;
 
-    const finalConfidence =
-      typeof confidence === "number" && !Number.isNaN(confidence) ? confidence : 1;
-
-    const finalSentimentLabel =
+    const finalSentiment =
       sentimentLabel ||
-      (POSITIVE_EMOTIONS.includes(lowerEmotion) ? "positive" : "negative");
+      (POSITIVE_EMOTIONS.includes(finalEmotion) ? "positive" : "negative");
 
-    const finalSupportLevel = HIGH_SUPPORT_EMOTIONS.includes(lowerEmotion)
-      ? "high"
-      : MODERATE_SUPPORT_EMOTIONS.includes(lowerEmotion)
-      ? "moderate"
-      : "low";
+    const finalSupport =
+      HIGH_SUPPORT_EMOTIONS.includes(finalEmotion)
+        ? "high"
+        : MODERATE_SUPPORT_EMOTIONS.includes(finalEmotion)
+        ? "moderate"
+        : "low";
 
-    const finalConfidenceLevel =
+    const confidenceLevel =
       finalConfidence >= 0.75
         ? "high"
         : finalConfidence >= 0.45
         ? "medium"
         : "low";
 
-    const finalSentimentScore = POSITIVE_EMOTIONS.includes(lowerEmotion) ? 0.7 : -0.5;
+    const sentimentScore = POSITIVE_EMOTIONS.includes(finalEmotion) ? 0.7 : -0.5;
 
-    const moodEntry = await MoodEntry.create({
+    // 🔥 Risk calculation
+    const previousNegativeCount = await MoodEntry.countDocuments({
       user: req.user._id,
-      inputText: encryptText(inputText || `Quick mood check-in: ${finalEmotion}`),
-      cleanText: encryptText(""),
-      predictedEmotion: lowerEmotion,
-      rawPrediction: "",
+      sentimentLabel: "negative",
+    });
+
+    const riskScore = calculateRiskScore({
+      predictedEmotion: finalEmotion,
+      sentimentLabel: finalSentiment,
       confidence: finalConfidence,
-      confidenceLevel: finalConfidenceLevel,
-      sentimentScore: finalSentimentScore,
-      sentimentLabel: finalSentimentLabel,
-      recommendationType: "general_reflection_content",
-      supportLevel: finalSupportLevel,
-      triggerCategory: "general",
-      explanationKeywords: [],
-      top3Predictions: [],
-      source: normalizedSource,
+      supportLevel: finalSupport,
+      text: inputText || "",
+      previousNegativeCount,
     });
 
-    return res.status(201).json({
+    const mood = await MoodEntry.create({
+      user: req.user._id,
+      inputText: encryptText(inputText || `Quick: ${finalEmotion}`),
+      cleanText: encryptText(""),
+      predictedEmotion: finalEmotion,
+      confidence: finalConfidence,
+      confidenceLevel,
+      sentimentScore,
+      sentimentLabel: finalSentiment,
+      supportLevel: finalSupport,
+      source: normalizeSource(source, "quick_checkin"),
+      riskScore,
+    });
+
+    res.status(201).json({
       success: true,
-      message: "Mood saved successfully",
-      data: moodEntry,
+      data: mood,
     });
-  } catch (error) {
-    console.error("quickMoodCheckIn error:", error.message);
-
-    return res.status(500).json({
+  } catch (err) {
+    console.error("quickMoodCheckIn:", err.message);
+    res.status(500).json({
       success: false,
-      message: "Error saving mood",
-      error: error.message,
+      message: "Failed to save mood",
     });
   }
 };
 
 // --------------------------------------------------
-// C. Save journal entry with AI prediction
-// POST /api/moods/journal
+// C. Journal + AI
 // --------------------------------------------------
 const saveMoodEntry = async (req, res) => {
   try {
     const { text, title, tags, source } = req.body;
 
-    if (!text || !text.trim()) {
+    if (!text?.trim()) {
       return res.status(400).json({
         success: false,
-        message: "Text is required",
+        message: "Text required",
       });
     }
-
-    const normalizedSource = normalizeSource(source, "journal");
 
     let prediction;
 
     try {
       prediction = await callAIService(text);
-
-      if (!prediction || !prediction.predictedEmotion) {
-        prediction = buildFallbackPrediction(text);
-      }
-    } catch (aiError) {
-      console.warn("AI service failed, using fallback prediction:", aiError.message);
-      prediction = buildFallbackPrediction(text);
+    } catch {
+      prediction = fallbackPrediction(text);
     }
 
-    const moodEntry = await MoodEntry.create({
+    if (!prediction?.predictedEmotion) {
+      prediction = fallbackPrediction(text);
+    }
+
+    const previousNegativeCount = await MoodEntry.countDocuments({
       user: req.user._id,
-      inputText: encryptText(prediction.inputText || text),
+      sentimentLabel: "negative",
+    });
+
+    const riskScore = calculateRiskScore({
+      predictedEmotion: prediction.predictedEmotion,
+      sentimentLabel: prediction.sentimentLabel,
+      confidence: prediction.confidence,
+      supportLevel: prediction.supportLevel,
+      text,
+      previousNegativeCount,
+    });
+
+    const mood = await MoodEntry.create({
+      user: req.user._id,
+      inputText: encryptText(text),
       cleanText: encryptText(prediction.cleanText || text),
-      predictedEmotion: prediction.predictedEmotion || "neutral",
-      rawPrediction: prediction.rawPrediction || "",
-      confidence: prediction.confidence || 0,
-      confidenceLevel: prediction.confidenceLevel || "low",
-      sentimentScore: prediction.sentimentScore || 0,
-      sentimentLabel: prediction.sentimentLabel || "neutral",
-      recommendationType:
-        prediction.recommendationType || "general_reflection_content",
-      supportLevel: prediction.supportLevel || "moderate",
-      triggerCategory: prediction.triggerCategory || "general",
-      explanationKeywords: Array.isArray(prediction.explanationKeywords)
-        ? prediction.explanationKeywords
-        : [],
-      top3Predictions: Array.isArray(prediction.top3Predictions)
-        ? prediction.top3Predictions
-        : [],
-      source: normalizedSource,
+      predictedEmotion: prediction.predictedEmotion,
+      confidence: prediction.confidence,
+      confidenceLevel: prediction.confidenceLevel,
+      sentimentScore: prediction.sentimentScore,
+      sentimentLabel: prediction.sentimentLabel,
+      supportLevel: prediction.supportLevel,
+      source: normalizeSource(source),
+      riskScore,
     });
 
     const journal = await JournalEntry.create({
       user: req.user._id,
       title: title || "",
       content: text,
-      moodEntry: moodEntry._id,
-      tags: Array.isArray(tags) ? tags : [],
+      moodEntry: mood._id,
+      tags: tags || [],
     });
 
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
-      message: "Journal entry and mood analysis saved successfully",
-      data: {
-        moodEntry,
-        journal,
-      },
+      data: { mood, journal },
     });
-  } catch (error) {
-    console.error("saveMoodEntry error:", error.message);
-
-    return res.status(500).json({
+  } catch (err) {
+    console.error("saveMoodEntry:", err.message);
+    res.status(500).json({
       success: false,
       message: "Save failed",
-      error: error.message,
     });
   }
 };
 
 // --------------------------------------------------
-// D. Get all mood entries for logged-in user
-// GET /api/moods/
+// D. Get My Moods
 // --------------------------------------------------
 const getMyMoodEntries = async (req, res) => {
   try {
-    const moods = await MoodEntry.find({ user: req.user._id }).sort({ createdAt: -1 });
-
-    const decryptedMoods = moods.map((mood) => {
-      const moodObj = mood.toObject();
-
-      return {
-        ...moodObj,
-        inputText: moodObj.inputText ? decryptText(moodObj.inputText) : "",
-        cleanText: moodObj.cleanText ? decryptText(moodObj.cleanText) : "",
-      };
+    const moods = await MoodEntry.find({ user: req.user._id }).sort({
+      createdAt: -1,
     });
 
-    return res.status(200).json({
+    const decrypted = moods.map((m) => ({
+      ...m.toObject(),
+      inputText: decryptText(m.inputText),
+      cleanText: decryptText(m.cleanText),
+    }));
+
+    res.json({
       success: true,
-      message: "Mood entries fetched successfully",
-      data: decryptedMoods,
+      data: decrypted,
     });
-  } catch (error) {
-    console.error("getMyMoodEntries error:", error.message);
-
-    return res.status(500).json({
+  } catch (err) {
+    console.error("getMyMoodEntries:", err.message);
+    res.status(500).json({
       success: false,
       message: "Fetch failed",
-      error: error.message,
     });
   }
 };

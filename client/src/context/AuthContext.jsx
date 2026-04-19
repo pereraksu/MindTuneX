@@ -23,7 +23,6 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ─── Load current logged-in user ───
   const loadUser = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -33,8 +32,8 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      const res = await getMeApi();
-      const userData = extractUser(res?.data);
+      const responseData = await getMeApi();
+      const userData = extractUser(responseData);
 
       if (!userData) {
         localStorage.removeItem("token");
@@ -56,10 +55,8 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, []);
 
-  // ─── Register ───
   const register = async (formData) => {
-    const res = await registerUserApi(formData);
-    const responseData = res?.data;
+    const responseData = await registerUserApi(formData);
 
     if (responseData?.token) {
       localStorage.setItem("token", responseData.token);
@@ -73,10 +70,8 @@ export const AuthProvider = ({ children }) => {
     return responseData;
   };
 
-  // ─── Login ───
   const login = async (formData) => {
-    const res = await loginUserApi(formData);
-    const responseData = res?.data;
+    const responseData = await loginUserApi(formData);
 
     if (responseData?.token) {
       localStorage.setItem("token", responseData.token);
@@ -90,7 +85,6 @@ export const AuthProvider = ({ children }) => {
     return responseData;
   };
 
-  // ─── Logout ───
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
