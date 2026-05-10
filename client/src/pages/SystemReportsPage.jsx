@@ -3,6 +3,10 @@ import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/useTheme";
+import {
+  getAdminSummaryApi,
+  getSystemStatusApi,
+} from "../api/adminApi";
 import { jsPDF } from "jspdf";
 import { toPng } from "html-to-image";
 import {
@@ -39,20 +43,20 @@ const BAR_COLORS = [
 const ACTIVITY_LOGS = [
   {
     action: "Admin Report Export",
-    user: "Sasini U.",
+    user: "Admin",
     status: "Success",
     time: "10:45 AM",
     statusColor: "#34d399",
   },
   {
     action: "Risk Alert Triggered",
-    user: "User #402",
+    user: "System",
     status: "Notified",
     time: "09:12 AM",
     statusColor: "#fb923c",
   },
   {
-    action: "DB Maintenance",
+    action: "Database Health Check",
     user: "System",
     status: "Completed",
     time: "01:00 AM",
@@ -77,11 +81,30 @@ const SystemReportsPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [summary, setSummary] = useState({});
+  const [systemStatus, setSystemStatus] = useState({});
   const reportRef = useRef(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 700);
-    return () => clearTimeout(timer);
+    const loadReportData = async () => {
+      try {
+        setLoading(true);
+
+        const [summaryRes, statusRes] = await Promise.all([
+          getAdminSummaryApi(),
+          getSystemStatusApi(),
+        ]);
+
+        setSummary(summaryRes?.data || {});
+        setSystemStatus(statusRes?.data || {});
+      } catch (error) {
+        console.error("Report data fetch failed:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadReportData();
   }, []);
 
   const handleDownloadPDF = async () => {
@@ -160,9 +183,11 @@ const SystemReportsPage = () => {
 
                 <div>
                   <p className="sr-eyebrow">Administrative Analytics</p>
+
                   <h1 className="sr-title">
                     Executive <span>Insights</span>
                   </h1>
+
                   <p className="sr-subtitle">
                     Comprehensive overview of platform performance, AI service
                     status, user engagement, and safety signals.
@@ -203,7 +228,7 @@ const SystemReportsPage = () => {
                   <div className="sr-status-grid">
                     <StatusCard
                       title="Server Status"
-                      value="Operational"
+                      value={systemStatus?.serverStatus || "Operational"}
                       valueColor="#34d399"
                       dotColor="#10b981"
                       from="#10b981"
@@ -212,16 +237,24 @@ const SystemReportsPage = () => {
 
                     <StatusCard
                       title="AI Model API"
-                      value="Connected"
-                      valueColor="#34d399"
-                      dotColor="#10b981"
+                      value={systemStatus?.aiModelApi || "Disconnected"}
+                      valueColor={
+                        systemStatus?.aiModelApi === "Connected"
+                          ? "#34d399"
+                          : "#fb7185"
+                      }
+                      dotColor={
+                        systemStatus?.aiModelApi === "Connected"
+                          ? "#10b981"
+                          : "#fb7185"
+                      }
                       from="#8b5cf6"
                       to="#6366f1"
                     />
 
                     <StatusCard
-                      title="Active Users"
-                      value="1,240"
+                      title="Total Users"
+                      value={summary?.totalUsers ?? 0}
                       valueColor={darkMode ? "#f8fafc" : "#0f172a"}
                       from="#0ea5e9"
                       to="#6366f1"
@@ -229,11 +262,54 @@ const SystemReportsPage = () => {
 
                     <StatusCard
                       title="Database"
-                      value="Healthy"
-                      valueColor="#34d399"
-                      dotColor="#10b981"
+                      value={systemStatus?.database || "Disconnected"}
+                      valueColor={
+                        systemStatus?.database === "Healthy"
+                          ? "#34d399"
+                          : "#fb7185"
+                      }
+                      dotColor={
+                        systemStatus?.database === "Healthy"
+                          ? "#10b981"
+                          : "#fb7185"
+                      }
                       from="#14b8a6"
                       to="#06b6d4"
+                    />
+                  </div>
+
+                  <div className="sr-status-grid">
+                    <StatusCard
+                      title="Mood Entries"
+                      value={summary?.totalMoodEntries ?? 0}
+                      valueColor={darkMode ? "#f8fafc" : "#0f172a"}
+                      from="#f59e0b"
+                      to="#fb923c"
+                    />
+
+                    <StatusCard
+                      title="High Risk Alerts"
+                      value={summary?.totalHighRiskEntries ?? 0}
+                      valueColor="#fb7185"
+                      dotColor="#fb7185"
+                      from="#f43f5e"
+                      to="#e11d48"
+                    />
+
+                    <StatusCard
+                      title="Active Users"
+                      value={systemStatus?.activeUsers ?? 0}
+                      valueColor={darkMode ? "#f8fafc" : "#0f172a"}
+                      from="#38bdf8"
+                      to="#0ea5e9"
+                    />
+
+                    <StatusCard
+                      title="Report Type"
+                      value="Admin"
+                      valueColor={darkMode ? "#f8fafc" : "#0f172a"}
+                      from="#a78bfa"
+                      to="#8b5cf6"
                     />
                   </div>
 
@@ -327,12 +403,14 @@ const SystemReportsPage = () => {
                           from="#10b981"
                           to="#14b8a6"
                         />
+
                         <ProgressItem
                           label="Neutral"
                           val={18}
                           from="#0ea5e9"
                           to="#6366f1"
                         />
+
                         <ProgressItem
                           label="High Risk"
                           val={14}

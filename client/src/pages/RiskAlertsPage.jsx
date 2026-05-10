@@ -235,10 +235,8 @@ const AlertCard = ({ entry, onRefresh }) => {
   const handleReview = async () => {
     try {
       setReviewing(true);
-
       await markReviewedApi(entry._id);
       await onRefresh();
-
       alert("Alert marked as reviewed");
     } catch (err) {
       console.error("Review failed:", err);
@@ -315,7 +313,12 @@ const AlertCard = ({ entry, onRefresh }) => {
         <p className="ra-content-label">Flagged Content</p>
 
         <p className="ra-content-text">
-          “{entry.displayText || entry.inputText || entry.text || "No journal text available"}”
+          “
+          {entry.displayText ||
+            entry.inputText ||
+            entry.text ||
+            "No journal text available"}
+          ”
         </p>
       </div>
 
@@ -393,44 +396,45 @@ const StateCard = ({ icon, title, text, loading, danger, success, action }) => (
 );
 
 const STYLES = (darkMode) => `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
   .ra-root {
     display: flex;
     min-height: 100svh;
     position: relative;
     overflow-x: hidden;
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
     background: ${
       darkMode
-        ? "radial-gradient(circle at top left, rgba(244,63,94,0.12), transparent 34%), #080c14"
-        : "linear-gradient(135deg, #fff7ed 0%, #f8fafc 48%, #fef2f2 100%)"
+        ? "linear-gradient(135deg, #020617 0%, #0f172a 45%, #111827 100%)"
+        : "linear-gradient(135deg, #f8fafc 0%, #fff7ed 50%, #fef2f2 100%)"
     };
     color: ${darkMode ? "#f8fafc" : "#0f172a"};
   }
 
   .ra-glow {
     position: fixed;
-    border-radius: 50%;
-    filter: blur(70px);
+    border-radius: 999px;
+    filter: blur(90px);
     pointer-events: none;
     z-index: 0;
+    opacity: ${darkMode ? "0.45" : "0.25"};
   }
 
   .ra-glow-1 {
-    top: -120px;
-    left: -100px;
-    width: 470px;
-    height: 470px;
-    background: rgba(244,63,94,0.15);
+    top: -160px;
+    left: -120px;
+    width: 520px;
+    height: 520px;
+    background: #fb7185;
   }
 
   .ra-glow-2 {
-    bottom: -120px;
-    right: -100px;
-    width: 430px;
-    height: 430px;
-    background: rgba(249,115,22,0.12);
+    bottom: -150px;
+    right: -120px;
+    width: 480px;
+    height: 480px;
+    background: #f97316;
   }
 
   .ra-body {
@@ -445,43 +449,56 @@ const STYLES = (darkMode) => `
   .ra-main {
     flex: 1;
     overflow-y: auto;
-    padding: 32px 24px;
+    padding: 34px 26px;
   }
 
   @media(min-width:1024px) {
-    .ra-main { padding: 36px 40px; }
+    .ra-main { padding: 38px 44px; }
   }
 
   .ra-container {
-    max-width: 1200px;
+    max-width: 1220px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 24px;
   }
 
   .ra-hero,
   .ra-card,
   .ra-state {
-    border-radius: 28px;
+    border-radius: 30px;
     border: 1px solid ${
-      darkMode ? "rgba(255,255,255,0.09)" : "rgba(15,23,42,0.08)"
+      darkMode ? "rgba(255,255,255,0.10)" : "rgba(15,23,42,0.08)"
     };
     background: ${
-      darkMode ? "rgba(15,23,42,0.72)" : "rgba(255,255,255,0.82)"
+      darkMode
+        ? "linear-gradient(145deg, rgba(15,23,42,0.86), rgba(2,6,23,0.82))"
+        : "linear-gradient(145deg, rgba(255,255,255,0.92), rgba(248,250,252,0.82))"
     };
-    backdrop-filter: blur(24px);
+    backdrop-filter: blur(28px);
     box-shadow: ${
       darkMode
-        ? "0 24px 60px rgba(0,0,0,0.28)"
-        : "0 24px 60px rgba(15,23,42,0.09)"
+        ? "0 28px 70px rgba(0,0,0,0.40)"
+        : "0 24px 60px rgba(15,23,42,0.10)"
     };
   }
 
   .ra-hero {
     position: relative;
     overflow: hidden;
-    padding: 30px;
+    padding: 34px;
+  }
+
+  .ra-hero::after {
+    content: "";
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    right: -80px;
+    top: -90px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(251,113,133,0.22), transparent 65%);
   }
 
   .ra-hero-line,
@@ -490,17 +507,19 @@ const STYLES = (darkMode) => `
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
+    height: 4px;
   }
 
   .ra-hero-line {
-    background: linear-gradient(90deg, #f43f5e, #f97316, #f59e0b);
+    background: linear-gradient(90deg, #fb7185, #f97316, #f59e0b);
   }
 
   .ra-hero-inner {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 24px;
   }
 
   @media(min-width:1024px) {
@@ -512,46 +531,52 @@ const STYLES = (darkMode) => `
   }
 
   .ra-eyebrow {
+    display: inline-flex;
+    width: fit-content;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: rgba(251,113,133,0.12);
+    border: 1px solid rgba(251,113,133,0.24);
     font-size: 10px;
     font-weight: 900;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: #fb7185;
-    margin-bottom: 8px;
   }
 
   .ra-title {
-    font-size: clamp(32px, 4vw, 48px);
+    margin-top: 14px;
+    font-size: clamp(34px, 4vw, 52px);
     font-weight: 900;
-    letter-spacing: -0.055em;
-    line-height: 1.05;
+    letter-spacing: -0.06em;
+    line-height: 1.02;
     color: ${darkMode ? "#f8fafc" : "#0f172a"};
   }
 
   .ra-title span {
-    background: linear-gradient(135deg, #f43f5e, #f97316);
+    background: linear-gradient(135deg, #fb7185, #f97316);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .ra-subtitle {
-    margin-top: 11px;
-    max-width: 620px;
+    margin-top: 14px;
+    max-width: 650px;
     font-size: 14px;
     font-weight: 600;
-    line-height: 1.7;
-    color: ${darkMode ? "rgba(255,255,255,0.42)" : "rgba(15,23,42,0.55)"};
+    line-height: 1.75;
+    color: ${darkMode ? "rgba(226,232,240,0.58)" : "rgba(15,23,42,0.56)"};
   }
 
   .ra-pills,
   .ra-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 9px;
+    gap: 10px;
   }
 
   .ra-pills {
-    margin-top: 18px;
+    margin-top: 20px;
   }
 
   .ra-actions {
@@ -563,32 +588,31 @@ const STYLES = (darkMode) => `
   .ra-live {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 7px 14px;
+    gap: 8px;
+    padding: 8px 15px;
     border-radius: 999px;
     border: 1px solid ${
-      darkMode ? "rgba(255,255,255,0.1)" : "rgba(15,23,42,0.08)"
+      darkMode ? "rgba(255,255,255,0.10)" : "rgba(15,23,42,0.08)"
     };
     background: ${
-      darkMode ? "rgba(255,255,255,0.055)" : "rgba(15,23,42,0.045)"
+      darkMode ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.72)"
     };
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 800;
-    color: ${
-      darkMode ? "rgba(255,255,255,0.48)" : "rgba(15,23,42,0.58)"
-    };
+    color: ${darkMode ? "rgba(226,232,240,0.68)" : "rgba(15,23,42,0.62)"};
+    box-shadow: ${darkMode ? "none" : "0 10px 24px rgba(15,23,42,0.06)"};
   }
 
   .ra-pill.danger,
   .ra-live {
     color: #fb7185;
-    border-color: rgba(244,63,94,0.25);
-    background: rgba(244,63,94,0.1);
+    border-color: rgba(251,113,133,0.28);
+    background: rgba(251,113,133,0.12);
   }
 
   .ra-dot {
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: 999px;
     flex-shrink: 0;
   }
@@ -599,7 +623,7 @@ const STYLES = (darkMode) => `
 
   @keyframes ra-pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.82); }
+    50% { opacity: 0.45; transform: scale(0.82); }
   }
 
   .ra-refresh,
@@ -610,26 +634,26 @@ const STYLES = (darkMode) => `
     border-radius: 999px;
     font-weight: 900;
     color: #fff;
-    background: linear-gradient(135deg, #f43f5e, #f97316);
-    box-shadow: 0 16px 34px rgba(244,63,94,0.26);
+    background: linear-gradient(135deg, #fb7185, #f97316);
+    box-shadow: 0 18px 36px rgba(251,113,133,0.30);
     transition: all 0.2s ease;
   }
 
   .ra-refresh {
-    padding: 12px 20px;
+    padding: 13px 22px;
     font-size: 13px;
   }
 
   .ra-refresh:hover,
   .ra-state-btn:hover {
     transform: translateY(-2px);
-    opacity: 0.9;
+    opacity: 0.92;
   }
 
   .ra-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 18px;
   }
 
   @media(min-width:1280px) {
@@ -639,36 +663,39 @@ const STYLES = (darkMode) => `
   .ra-card {
     position: relative;
     overflow: hidden;
-    padding: 22px;
-    transition: all 0.22s ease;
+    padding: 24px;
+    transition: all 0.24s ease;
   }
 
   .ra-card:hover {
-    transform: translateY(-3px);
-    border-color: ${
-      darkMode ? "rgba(255,255,255,0.16)" : "rgba(244,63,94,0.22)"
+    transform: translateY(-4px);
+    border-color: rgba(251,113,133,0.30);
+    box-shadow: ${
+      darkMode
+        ? "0 32px 80px rgba(0,0,0,0.48)"
+        : "0 30px 70px rgba(15,23,42,0.14)"
     };
   }
 
   .ra-card-head {
     display: flex;
-    gap: 13px;
-    padding-bottom: 15px;
+    gap: 14px;
+    padding-bottom: 17px;
     border-bottom: 1px solid ${
-      darkMode ? "rgba(255,255,255,0.07)" : "rgba(15,23,42,0.07)"
+      darkMode ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.07)"
     };
   }
 
   .ra-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 16px;
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
     border: 1px solid;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 13px;
-    font-weight: 900;
+    font-weight: 950;
     flex-shrink: 0;
   }
 
@@ -681,54 +708,56 @@ const STYLES = (darkMode) => `
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 4px;
+    gap: 9px;
+    margin-bottom: 5px;
   }
 
   .ra-name-row h3 {
-    font-size: 15px;
-    font-weight: 900;
-    color: ${darkMode ? "rgba(255,255,255,0.9)" : "#0f172a"};
+    font-size: 16px;
+    font-weight: 950;
+    color: ${darkMode ? "#f8fafc" : "#0f172a"};
   }
 
   .ra-user p {
-    font-size: 12px;
-    font-weight: 600;
-    color: ${darkMode ? "rgba(255,255,255,0.34)" : "rgba(15,23,42,0.48)"};
+    font-size: 12.5px;
+    font-weight: 650;
+    color: ${darkMode ? "rgba(148,163,184,0.72)" : "rgba(15,23,42,0.48)"};
   }
 
   .ra-priority {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 11px;
+    padding: 5px 12px;
     border-radius: 999px;
     border: 1px solid;
     font-size: 10.5px;
-    font-weight: 900;
+    font-weight: 950;
   }
 
   .ra-priority span {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
     border-radius: 999px;
   }
 
   .ra-content-box {
-    margin-top: 15px;
-    padding: 15px 17px;
-    border-radius: 16px;
-    border: 1px solid rgba(244,63,94,0.18);
-    background: rgba(244,63,94,0.075);
+    margin-top: 17px;
+    padding: 17px 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(251,113,133,0.20);
+    background: ${
+      darkMode ? "rgba(251,113,133,0.08)" : "rgba(251,113,133,0.07)"
+    };
   }
 
   .ra-content-label {
-    font-size: 9.5px;
-    font-weight: 900;
+    font-size: 10px;
+    font-weight: 950;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: #fb7185;
-    margin-bottom: 8px;
+    margin-bottom: 9px;
   }
 
   .ra-content-text {
@@ -736,18 +765,18 @@ const STYLES = (darkMode) => `
     font-weight: 600;
     line-height: 1.75;
     font-style: italic;
-    color: ${darkMode ? "rgba(255,255,255,0.58)" : "rgba(15,23,42,0.66)"};
+    color: ${darkMode ? "rgba(248,250,252,0.74)" : "rgba(15,23,42,0.70)"};
   }
 
   .ra-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 7px;
-    margin-top: 14px;
+    gap: 8px;
+    margin-top: 15px;
   }
 
   .ra-tag {
-    padding: 5px 12px;
+    padding: 6px 13px;
     border-radius: 999px;
     border: 1px solid;
     font-size: 11px;
@@ -756,40 +785,40 @@ const STYLES = (darkMode) => `
   }
 
   .ra-tag.muted {
-    color: ${darkMode ? "rgba(255,255,255,0.45)" : "rgba(15,23,42,0.58)"};
+    color: ${darkMode ? "rgba(226,232,240,0.62)" : "rgba(15,23,42,0.58)"};
     background: ${darkMode ? "rgba(255,255,255,0.055)" : "rgba(15,23,42,0.045)"};
-    border-color: ${darkMode ? "rgba(255,255,255,0.1)" : "rgba(15,23,42,0.08)"};
+    border-color: ${darkMode ? "rgba(255,255,255,0.10)" : "rgba(15,23,42,0.08)"};
   }
 
   .ra-tag.blue {
     color: #38bdf8;
-    background: rgba(14,165,233,0.1);
-    border-color: rgba(14,165,233,0.24);
+    background: rgba(14,165,233,0.11);
+    border-color: rgba(14,165,233,0.26);
   }
 
   .ra-footer {
-    margin-top: 15px;
-    padding-top: 14px;
+    margin-top: 17px;
+    padding-top: 15px;
     border-top: 1px solid ${
-      darkMode ? "rgba(255,255,255,0.07)" : "rgba(15,23,42,0.07)"
+      darkMode ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.07)"
     };
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 13px;
   }
 
   .ra-footer p {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: ${darkMode ? "rgba(255,255,255,0.34)" : "rgba(15,23,42,0.48)"};
+    font-size: 12px;
+    font-weight: 750;
+    color: ${darkMode ? "rgba(226,232,240,0.50)" : "rgba(15,23,42,0.52)"};
   }
 
   .ra-footer p span {
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: 999px;
     flex-shrink: 0;
   }
@@ -797,17 +826,17 @@ const STYLES = (darkMode) => `
   .ra-card-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 9px;
+    gap: 10px;
   }
 
   .ra-review,
   .ra-contact {
-    padding: 11px;
-    border-radius: 14px;
+    padding: 12px;
+    border-radius: 16px;
     cursor: pointer;
     font-family: inherit;
     font-size: 12.5px;
-    font-weight: 900;
+    font-weight: 950;
     transition: all 0.18s ease;
   }
 
@@ -818,82 +847,74 @@ const STYLES = (darkMode) => `
   }
 
   .ra-review {
-    color: #fb7185;
-    background: rgba(244,63,94,0.12);
-    border: 1px solid rgba(244,63,94,0.26);
+    color: #fff;
+    background: linear-gradient(135deg, #fb7185, #e11d48);
+    border: 1px solid rgba(251,113,133,0.30);
+    box-shadow: 0 14px 28px rgba(225,29,72,0.20);
   }
 
   .ra-contact {
-    color: ${darkMode ? "rgba(255,255,255,0.62)" : "rgba(15,23,42,0.62)"};
-    background: ${darkMode ? "rgba(255,255,255,0.055)" : "rgba(15,23,42,0.045)"};
-    border: 1px solid ${
-      darkMode ? "rgba(255,255,255,0.1)" : "rgba(15,23,42,0.08)"
-    };
+    color: ${darkMode ? "#e2e8f0" : "#0f172a"};
+    background: ${darkMode ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.76)"};
+    border: 1px solid ${darkMode ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.08)"};
   }
 
-  .ra-review:hover {
-    background: rgba(244,63,94,0.2);
-  }
-
+  .ra-review:hover,
   .ra-contact:hover {
-    background: ${darkMode ? "rgba(255,255,255,0.095)" : "rgba(15,23,42,0.075)"};
+    transform: translateY(-1px);
   }
 
   .ra-state {
-    min-height: 40vh;
-    padding: 48px 24px;
+    min-height: 42vh;
+    padding: 52px 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 13px;
     text-align: center;
   }
 
   .ra-state-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 20px;
+    width: 68px;
+    height: 68px;
+    border-radius: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
-    background: ${
-      darkMode ? "rgba(255,255,255,0.055)" : "rgba(15,23,42,0.045)"
-    };
-    border: 1px solid ${
-      darkMode ? "rgba(255,255,255,0.1)" : "rgba(15,23,42,0.08)"
-    };
+    font-size: 30px;
+    background: ${darkMode ? "rgba(255,255,255,0.055)" : "rgba(255,255,255,0.72)"};
+    border: 1px solid ${darkMode ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.08)"};
   }
 
   .ra-state.success .ra-state-icon {
     color: #34d399;
-    background: rgba(52,211,153,0.1);
-    border-color: rgba(52,211,153,0.25);
+    background: rgba(52,211,153,0.11);
+    border-color: rgba(52,211,153,0.26);
   }
 
   .ra-state.danger .ra-state-icon {
     color: #fb7185;
-    background: rgba(244,63,94,0.1);
-    border-color: rgba(244,63,94,0.25);
+    background: rgba(244,63,94,0.11);
+    border-color: rgba(244,63,94,0.26);
   }
 
   .ra-state h3 {
-    font-size: 18px;
-    font-weight: 900;
+    font-size: 19px;
+    font-weight: 950;
   }
 
   .ra-state p {
-    max-width: 360px;
+    max-width: 380px;
     font-size: 13px;
     font-weight: 600;
     line-height: 1.7;
-    color: ${darkMode ? "rgba(255,255,255,0.42)" : "rgba(15,23,42,0.55)"};
+    color: ${darkMode ? "rgba(226,232,240,0.54)" : "rgba(15,23,42,0.56)"};
   }
 
   .ra-state-btn {
     margin-top: 8px;
-    padding: 10px 20px;
+    padding: 11px 22px;
     font-size: 13px;
   }
 
@@ -902,14 +923,34 @@ const STYLES = (darkMode) => `
     height: 28px;
     border-radius: 999px;
     border: 3px solid ${
-      darkMode ? "rgba(255,255,255,0.1)" : "rgba(15,23,42,0.1)"
+      darkMode ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.10)"
     };
-    border-top-color: #f43f5e;
+    border-top-color: #fb7185;
     animation: ra-spin 0.75s linear infinite;
   }
 
   @keyframes ra-spin {
     to { transform: rotate(360deg); }
+  }
+
+  @media(max-width: 720px) {
+    .ra-main {
+      padding: 24px 16px;
+    }
+
+    .ra-hero {
+      padding: 24px;
+      border-radius: 24px;
+    }
+
+    .ra-card {
+      padding: 20px;
+      border-radius: 24px;
+    }
+
+    .ra-card-actions {
+      grid-template-columns: 1fr;
+    }
   }
 `;
 
