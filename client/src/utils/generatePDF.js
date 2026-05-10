@@ -1,74 +1,174 @@
 import jsPDF from "jspdf";
 
-export const generateMoodReport = (insight) => {
-  const doc = new jsPDF();
+export const generateMoodReport = (insight = {}) => {
+  const doc = new jsPDF("p", "mm", "a4");
 
-  // ===== HEADER =====
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
-  doc.text("MindTuneX", 20, 20);
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
 
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "normal");
-  doc.text("AI-Powered Mood Analysis Report", 20, 28);
-
-  // Line
-  doc.setDrawColor(200);
-  doc.line(20, 32, 190, 32);
-
-  // ===== USER SUMMARY =====
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text("Summary Overview", 20, 45);
-
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "normal");
-
-  doc.text(`Total Entries: ${insight?.totalEntries || 0}`, 20, 55);
-  doc.text(`Average Sentiment: ${insight?.avgSentiment || "N/A"}`, 20, 65);
-  doc.text(`Top Emotion: ${insight?.topEmotion || "N/A"}`, 20, 75);
-
-  // ===== SUMMARY TEXT BOX =====
-  doc.setFont("helvetica", "bold");
-  doc.text("AI Insight Summary", 20, 90);
-
-  doc.setFont("helvetica", "normal");
-
-  doc.text(
-    insight?.summaryText || "No summary available",
-    20,
-    100,
-    { maxWidth: 170 }
-  );
-
-  // ===== EMOTION BREAKDOWN =====
-  const emotionCounts = insight?.emotionCounts || {};
+  const totalEntries = insight?.totalEntries || 0;
+  const avgSentiment = insight?.avgSentiment || "N/A";
+  const topEmotion = insight?.topEmotion || "N/A";
+  const summaryText = insight?.summaryText || "No AI insight summary available.";
+  const emotionCounts = insight?.emotionCounts || insight?.emotionDistribution || {};
   const entries = Object.entries(emotionCounts);
 
-  let startY = 130;
+  const generatedDate = new Date().toLocaleString();
+
+  // ===== COLORS =====
+  const teal = [20, 184, 166];
+  const sky = [14, 165, 233];
+  const dark = [15, 23, 42];
+  const muted = [100, 116, 139];
+  const lightBg = [248, 250, 252];
+  const border = [226, 232, 240];
+
+  // ===== BACKGROUND =====
+  doc.setFillColor(...lightBg);
+  doc.rect(0, 0, pageWidth, pageHeight, "F");
+
+  // ===== HEADER =====
+  doc.setFillColor(...dark);
+  doc.roundedRect(12, 12, pageWidth - 24, 34, 5, 5, "F");
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(22);
+  doc.text("MindTuneX", 20, 27);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text("AI-Powered Mood Analysis Report", 20, 35);
+
+  doc.setTextColor(203, 213, 225);
+  doc.setFontSize(8);
+  doc.text(`Generated: ${generatedDate}`, pageWidth - 20, 35, { align: "right" });
+
+  // ===== TITLE =====
+  doc.setTextColor(...dark);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("Summary Overview", 16, 60);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...muted);
+  doc.text("A concise overview of your recent emotional wellness patterns.", 16, 66);
+
+  // ===== STAT CARDS =====
+  const cardY = 76;
+  const cardW = 58;
+  const cardH = 28;
+  const gap = 5;
+
+  const stats = [
+    { label: "Total Entries", value: totalEntries, color: teal },
+    { label: "Average Sentiment", value: avgSentiment, color: sky },
+    { label: "Top Emotion", value: topEmotion, color: [139, 92, 246] },
+  ];
+
+  stats.forEach((stat, i) => {
+    const x = 16 + i * (cardW + gap);
+
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(...border);
+    doc.roundedRect(x, cardY, cardW, cardH, 4, 4, "FD");
+
+    doc.setFillColor(...stat.color);
+    doc.roundedRect(x, cardY, cardW, 3, 4, 4, "F");
+
+    doc.setTextColor(...muted);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.text(stat.label.toUpperCase(), x + 5, cardY + 12);
+
+    doc.setTextColor(...dark);
+    doc.setFontSize(14);
+    doc.text(String(stat.value), x + 5, cardY + 22);
+  });
+
+  // ===== AI INSIGHT BOX =====
+  let y = 122;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(...dark);
+  doc.text("AI Insight Summary", 16, y);
+
+  y += 7;
+
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(...border);
+  doc.roundedRect(16, y, pageWidth - 32, 45, 4, 4, "FD");
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(51, 65, 85);
+
+  const summaryLines = doc.splitTextToSize(summaryText, pageWidth - 44);
+  doc.text(summaryLines, 22, y + 10);
+
+  y += 58;
+
+  // ===== EMOTION BREAKDOWN =====
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(...dark);
+  doc.text("Emotion Breakdown", 16, y);
+
+  y += 8;
 
   if (entries.length > 0) {
-    doc.setFont("helvetica", "bold");
-    doc.text("Emotion Breakdown", 20, startY);
+    doc.setFillColor(...dark);
+    doc.roundedRect(16, y, pageWidth - 32, 10, 3, 3, "F");
 
-    doc.setFont("helvetica", "normal");
-    startY += 10;
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.text("Emotion", 22, y + 7);
+    doc.text("Count", pageWidth - 35, y + 7);
 
-    entries.forEach(([emotion, value]) => {
-      doc.text(`${emotion}: ${value}`, 25, startY);
-      startY += 8;
+    y += 14;
+
+    entries.forEach(([emotion, value], index) => {
+      if (y > 260) {
+        doc.addPage();
+        y = 20;
+      }
+
+      doc.setFillColor(index % 2 === 0 ? 255 : 248, index % 2 === 0 ? 255 : 250, index % 2 === 0 ? 255 : 252);
+      doc.setDrawColor(...border);
+      doc.roundedRect(16, y, pageWidth - 32, 10, 2, 2, "FD");
+
+      doc.setTextColor(51, 65, 85);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+
+      doc.text(capitalize(emotion), 22, y + 7);
+      doc.text(String(value), pageWidth - 35, y + 7);
+
+      y += 11;
     });
+  } else {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(...muted);
+    doc.text("No emotion breakdown data available.", 16, y + 8);
   }
 
   // ===== FOOTER =====
-  doc.setFontSize(10);
-  doc.setTextColor(150);
-  doc.text(
-    "Generated by MindTuneX • Confidential Report",
-    20,
-    280
-  );
+  doc.setDrawColor(...border);
+  doc.line(16, 278, pageWidth - 16, 278);
 
-  // ===== SAVE =====
+  doc.setFontSize(8);
+  doc.setTextColor(148, 163, 184);
+  doc.text("Generated by MindTuneX • Confidential Wellness Report", 16, 284);
+  doc.text("This report is for self-reflection and wellness tracking only.", pageWidth - 16, 284, {
+    align: "right",
+  });
+
   doc.save("MindTuneX_Mood_Report.pdf");
+};
+
+const capitalize = (text = "") => {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 };

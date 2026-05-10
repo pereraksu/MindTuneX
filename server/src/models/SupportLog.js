@@ -1,12 +1,27 @@
 const mongoose = require("mongoose");
 
+const ALLOWED_EMOTIONS = [
+  "joy",
+  "calm",
+  "stress",
+  "anxiety",
+  "sadness",
+  "anger",
+  "fatigue",
+  "love",
+  "fear",
+  "disgust",
+  "surprise",
+  "neutral",
+];
+
 const supportLogSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true, // 🔥 faster queries
+      index: true,
     },
 
     moodEntry: {
@@ -18,6 +33,7 @@ const supportLogSchema = new mongoose.Schema(
 
     detectedEmotion: {
       type: String,
+      enum: ALLOWED_EMOTIONS,
       default: "neutral",
       trim: true,
       lowercase: true,
@@ -28,7 +44,7 @@ const supportLogSchema = new mongoose.Schema(
       type: String,
       default: "",
       trim: true,
-      maxlength: 2000, // 🔒 safety
+      maxlength: 2000,
     },
 
     recommendations: {
@@ -36,7 +52,6 @@ const supportLogSchema = new mongoose.Schema(
       default: [],
     },
 
-    // 🔥 NEW: support level tracking
     supportLevel: {
       type: String,
       enum: ["low", "moderate", "high"],
@@ -45,27 +60,62 @@ const supportLogSchema = new mongoose.Schema(
       index: true,
     },
 
-    // 🔥 NEW: user action tracking
     actionTaken: {
       type: String,
       enum: ["none", "viewed", "followed", "ignored"],
       default: "none",
       lowercase: true,
+      index: true,
     },
 
-    // 🔥 NEW: YouTube engagement tracking (future analytics)
     interactedPlaylist: {
       type: String,
       default: "",
+      trim: true,
+      maxlength: 500,
+    },
+
+    clickedRecommendations: {
+      type: [String],
+      default: [],
+    },
+
+    responseSource: {
+      type: String,
+      enum: ["support_page", "chatbot", "journal", "system"],
+      default: "support_page",
+      lowercase: true,
+      index: true,
+    },
+
+    sessionDuration: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// 🔥 Useful indexes
 supportLogSchema.index({ user: 1, createdAt: -1 });
 supportLogSchema.index({ supportLevel: 1, createdAt: -1 });
+supportLogSchema.index({ detectedEmotion: 1, createdAt: -1 });
+supportLogSchema.index({ user: 1, detectedEmotion: 1, createdAt: -1 });
 
-module.exports = mongoose.model("SupportLog", supportLogSchema);
+supportLogSchema.virtual("hasInteraction").get(function () {
+  return this.actionTaken !== "none";
+});
+
+supportLogSchema.set("toJSON", {
+  virtuals: true,
+  transform: (_, ret) => {
+    delete ret.__v;
+    return ret;
+  },
+});
+
+const SupportLog =
+  mongoose.models.SupportLog ||
+  mongoose.model("SupportLog", supportLogSchema);
+
+module.exports = SupportLog;

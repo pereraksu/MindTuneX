@@ -1,15 +1,15 @@
 import axios from "axios";
 
 // ======================================================
-// JOURNAL API INSTANCE
+// CHATBOT API INSTANCE
 // ======================================================
 
 const API = axios.create({
   baseURL:
-    import.meta.env.VITE_JOURNAL_API_URL ||
-    "http://localhost:5000/api/journals",
+    import.meta.env.VITE_CHATBOT_API_URL ||
+    "http://localhost:5000/api/chatbot",
 
-  timeout: 60000,
+  timeout: 20000,
 
   headers: {
     "Content-Type": "application/json",
@@ -33,7 +33,7 @@ API.interceptors.request.use(
   },
 
   (error) => {
-    console.error("❌ Journal Request Error:", error);
+    console.error("❌ Chatbot Request Error:", error);
     return Promise.reject(error);
   }
 );
@@ -72,14 +72,14 @@ API.interceptors.response.use(
     // Server Error
     // ==========================
     else if (error.response?.status >= 500) {
-      console.error("🔥 Journal Server Error:", error.response?.data);
+      console.error("🔥 Chatbot Server Error:", error.response?.data);
     }
 
     // ==========================
     // Timeout
     // ==========================
     else if (error.code === "ECONNABORTED") {
-      console.error("⌛ Journal request timeout.");
+      console.error("⌛ Chatbot request timeout.");
     }
 
     // ==========================
@@ -94,42 +94,30 @@ API.interceptors.response.use(
 );
 
 // ======================================================
-// HELPER
+// HELPER FUNCTION
 // ======================================================
 
 const handleResponse = (response) => response.data;
 
 // ======================================================
-// JOURNAL API FUNCTIONS
+// CHATBOT API FUNCTIONS
 // ======================================================
 
-// Create Journal Entry
-export const createJournalApi = async (payload) => {
-  const response = await API.post("/", payload);
+// Send Message
+export const sendChatMessageApi = async (payload) => {
+  const response = await API.post("/message", payload);
   return handleResponse(response);
 };
 
-// Get My Journals
-export const getMyJournalsApi = async () => {
+// Get Chat History
+export const getChatHistoryApi = async () => {
   const response = await API.get("/");
   return handleResponse(response);
 };
 
-// Get Single Journal
-export const getJournalByIdApi = async (id) => {
-  const response = await API.get(`/${id}`);
-  return handleResponse(response);
-};
-
-// Update Journal
-export const updateJournalApi = async (id, payload) => {
-  const response = await API.put(`/${id}`, payload);
-  return handleResponse(response);
-};
-
-// Delete Journal
-export const deleteJournalApi = async (id) => {
-  const response = await API.delete(`/${id}`);
+// Clear Chat History (Optional Future Feature)
+export const clearChatHistoryApi = async () => {
+  const response = await API.delete("/clear");
   return handleResponse(response);
 };
 

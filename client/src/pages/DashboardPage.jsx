@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/useTheme";
 import { getMyMoodsApi } from "../api/moodApi";
 import { getWeeklyInsightsApi } from "../api/insightApi";
 
@@ -30,8 +31,24 @@ const EMOTION_EMOJI = {
   neutral: "😐",
 };
 
+const EMOTION_COLOR = {
+  joy: "#f59e0b",
+  calm: "#14b8a6",
+  stress: "#f43f5e",
+  anxiety: "#fb923c",
+  sadness: "#8b5cf6",
+  anger: "#ef4444",
+  fatigue: "#94a3b8",
+  love: "#f472b6",
+  fear: "#818cf8",
+  disgust: "#4ade80",
+  surprise: "#06b6d4",
+  neutral: "#64748b",
+};
+
 const DashboardPage = () => {
   const { user, logout, isAdmin } = useAuth();
+  const { darkMode } = useTheme();
 
   const [moods, setMoods] = useState([]);
   const [insight, setInsight] = useState(null);
@@ -48,10 +65,10 @@ const DashboardPage = () => {
 
       const moodsData = Array.isArray(moodsRes)
         ? moodsRes
-        : Array.isArray(moodsRes?.data)
-        ? moodsRes.data
         : Array.isArray(moodsRes?.data?.data)
         ? moodsRes.data.data
+        : Array.isArray(moodsRes?.data)
+        ? moodsRes.data
         : [];
 
       const insightData =
@@ -74,14 +91,18 @@ const DashboardPage = () => {
 
   const totalEntries = moods.length;
   const latestEmotion = moods[0]?.predictedEmotion || "N/A";
+
   const averageSentiment =
     insight?.avgSentiment !== undefined && insight?.avgSentiment !== null
       ? Number(insight.avgSentiment).toFixed(3)
       : "N/A";
+
   const topEmotion = insight?.topEmotion || "N/A";
 
   const stressCount = moods.filter((m) =>
-    ["stress", "anxiety", "sadness", "anger", "fear"].includes(m.predictedEmotion)
+    ["stress", "anxiety", "sadness", "anger", "fear"].includes(
+      m.predictedEmotion
+    )
   ).length;
 
   const positiveCount = moods.filter((m) =>
@@ -149,283 +170,290 @@ const DashboardPage = () => {
   }, [moods]);
 
   return (
-    <div className="relative flex min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50 to-sky-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 transition-colors duration-500">
-      <div className="pointer-events-none absolute inset-0 opacity-40 dark:opacity-20 bg-[radial-gradient(circle_at_top_left,rgba(45,212,191,0.20),transparent_25%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.18),transparent_25%),radial-gradient(circle_at_bottom,rgba(99,102,241,0.12),transparent_30%)]" />
+    <>
+      <style>{STYLES(darkMode)}</style>
 
-      <Sidebar forceAdmin={false} />
+      <div className="dash-root">
+        <Sidebar forceAdmin={false} />
 
-      <div className="relative flex flex-1 flex-col">
-        <Navbar user={user} onLogout={logout} isAdmin={isAdmin} />
+        <div className="dash-body">
+          <Navbar user={user} onLogout={logout} isAdmin={isAdmin} />
 
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl space-y-8">
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between text-left">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-sky-500 dark:text-sky-400">
-                  MindTuneX Overview
-                </p>
-                <h1 className="mt-2 font-serif text-4xl lg:text-5xl font-semibold tracking-tight text-slate-800 dark:text-white">
-                  Analytics{" "}
-                  <span className="bg-gradient-to-r from-teal-500 via-sky-500 to-cyan-600 bg-clip-text text-transparent">
-                    Dashboard
-                  </span>
-                </h1>
-                <p className="mt-3 text-slate-500 dark:text-slate-300 text-base">
-                  Welcome back,{" "}
-                  <span className="font-semibold text-slate-700 dark:text-slate-100">
-                    {user?.fullName || "User"}
-                  </span>{" "}
-                  ✨ Here is your emotional wellness summary.
-                </p>
-              </div>
+          <main className="dash-main">
+            <div className="dash-container">
+              <div className="page-header">
+                <div>
+                  <p className="page-eyebrow">MindTuneX Overview</p>
 
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  to="/journal"
-                  className="rounded-2xl bg-gradient-to-r from-sky-600 to-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-200/60 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:from-sky-700 hover:to-cyan-700"
-                >
-                  New Journal Entry
-                </Link>
-                <Link
-                  to="/support"
-                  className="rounded-2xl border border-sky-200/70 bg-white/80 backdrop-blur px-5 py-3 text-sm font-semibold text-sky-700 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-800/80 dark:text-sky-300"
-                >
-                  Get Support
-                </Link>
-              </div>
-            </div>
+                  <h1 className="page-title">
+                    Analytics <span className="page-title-accent">Dashboard</span>
+                  </h1>
 
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-              <div className="xl:col-span-2">
-                <MoodCheckIn onSuccess={loadDashboardData} />
-              </div>
-              <AIRecommendationCard
-                topEmotion={topEmotion}
-                wellnessLabel={wellnessLabel}
-                positiveCount={positiveCount}
-                stressCount={stressCount}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-6 lg:grid-cols-4 text-left">
-              <StatCard
-                title="TOTAL ENTRIES"
-                val={totalEntries}
-                desc="Saved records"
-                color="from-sky-500 to-cyan-500"
-              />
-              <StatCard
-                title="LATEST MOOD"
-                val={latestEmotion}
-                desc="Analyzed state"
-                emoji={latestEmotionEmoji}
-                color="from-amber-400 to-orange-500"
-              />
-              <StatCard
-                title="SENTIMENT"
-                val={averageSentiment}
-                desc="Weekly balance"
-                color="from-emerald-400 to-teal-500"
-              />
-              <StatCard
-                title="TOP MOOD"
-                val={topEmotion}
-                desc="Most frequent"
-                color="from-violet-500 to-fuchsia-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 text-left">
-              <ChartWrapper
-                title="Sentiment Trend"
-                subtitle="Track how your emotional polarity changes over time"
-              >
-                <SentimentTrendChart moods={moods} />
-              </ChartWrapper>
-
-              <ChartWrapper
-                title="Emotion Distribution"
-                subtitle="See the share of each detected emotional state"
-              >
-                <EmotionPieChart insight={insight} />
-              </ChartWrapper>
-            </div>
-
-            <div className="rounded-[2rem] border border-white/60 bg-white/70 p-8 shadow-2xl shadow-sky-100/50 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/70 text-left transition-all">
-              <div className="mb-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
-                  Deep Insights
-                </p>
-                <h3 className="mt-2 text-2xl font-bold text-slate-800 dark:text-white transition-colors">
-                  Frequent Emotional Triggers
-                </h3>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 italic">
-                  Keywords extracted from your saved journal entries and mood logs.
-                </p>
-              </div>
-
-              <div className="h-[350px] w-full overflow-hidden rounded-3xl border border-slate-100 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/40">
-                {loading ? (
-                  <div className="h-full animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
-                ) : (
-                  <MoodWordCloud moods={moods} />
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-3 text-left">
-              <div className="xl:col-span-2 flex flex-col gap-6">
-                <div className="rounded-[2rem] border border-white/60 bg-white/70 p-8 shadow-2xl shadow-sky-100/50 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/70">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-                    Weekly Wellness Summary
+                  <p className="page-sub">
+                    Welcome back,{" "}
+                    <strong>{user?.fullName || "User"}</strong> — here&apos;s
+                    your emotional wellness summary.
                   </p>
-                  <h3 className="mt-2 text-2xl font-semibold text-slate-800 dark:text-white">
-                    Emotional health overview
-                  </h3>
-
-                  <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <SummaryItem
-                      label="Wellness Status"
-                      val={wellnessLabel}
-                      bg="bg-sky-50 dark:bg-sky-900/20"
-                    />
-                    <SummaryItem
-                      label="Positive Entries"
-                      val={positiveCount}
-                      bg="bg-emerald-50 dark:bg-emerald-900/20"
-                    />
-                    <SummaryItem
-                      label="Stress Signals"
-                      val={stressCount}
-                      bg="bg-rose-50 dark:bg-rose-900/20"
-                    />
-                  </div>
-
-                  <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <InsightBox
-                      title="Insight Summary"
-                      text={`A total of ${totalEntries} entries were recorded. The dominant mood was ${topEmotion}. Overall emotional balance appears ${wellnessLabel.toLowerCase()}.`}
-                    />
-                    <InsightBox
-                      title="Suggested Next Step"
-                      text={recommendationText}
-                      showLinks
-                    />
-                  </div>
                 </div>
 
-                <BadgesCard moods={moods} streak={journalingStreak} />
-              </div>
+                <div className="header-actions">
+                  <Link to="/journal" className="btn-primary">
+                    + New Journal Entry
+                  </Link>
 
-              <div className="rounded-[2rem] border border-white/60 bg-white/70 p-6 shadow-2xl shadow-sky-100/50 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/70">
-                <div className="mb-5 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-700 dark:text-white">
-                      Recent Logs
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Your latest emotional entries
-                    </p>
-                  </div>
-                  <Link
-                    to="/mood-history"
-                    className="text-sm font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400"
-                  >
-                    View All
+                  <Link to="/support" className="btn-secondary">
+                    Get Support
                   </Link>
                 </div>
+              </div>
 
-                <div className="max-h-[650px] space-y-4 overflow-y-auto pr-1">
-                  {moods.length > 0 ? (
-                    moods.slice(0, 5).map((item) => (
-                      <HistoryItem key={item._id} item={item} />
-                    ))
+              <div className="top-grid">
+                <div className="card">
+                  <MoodCheckIn onSuccess={loadDashboardData} />
+                </div>
+
+                <div className="card">
+                  <AIRecommendationCard
+                    topEmotion={topEmotion}
+                    wellnessLabel={wellnessLabel}
+                    positiveCount={positiveCount}
+                    stressCount={stressCount}
+                  />
+                </div>
+              </div>
+
+              <div className="stat-grid">
+                <StatCard
+                  title="Total Entries"
+                  val={loading ? "—" : totalEntries}
+                  desc="Saved records"
+                  gradientFrom="#14b8a6"
+                  gradientTo="#0ea5e9"
+                />
+
+                <StatCard
+                  title="Latest Mood"
+                  val={loading ? "—" : latestEmotion}
+                  desc="Analyzed state"
+                  emoji={loading ? null : latestEmotionEmoji}
+                  gradientFrom="#f59e0b"
+                  gradientTo="#f97316"
+                  accentColor={EMOTION_COLOR[latestEmotion]}
+                />
+
+                <StatCard
+                  title="Sentiment"
+                  val={loading ? "—" : averageSentiment}
+                  desc="Weekly balance"
+                  gradientFrom="#10b981"
+                  gradientTo="#14b8a6"
+                />
+
+                <StatCard
+                  title="Top Mood"
+                  val={loading ? "—" : topEmotion}
+                  desc="Most frequent"
+                  gradientFrom="#8b5cf6"
+                  gradientTo="#ec4899"
+                  accentColor={EMOTION_COLOR[topEmotion]}
+                />
+              </div>
+
+              <div className="chart-grid">
+                <div className="card chart-card">
+                  <p className="chart-eyebrow">Sentiment Trend</p>
+                  <p className="chart-subtitle">
+                    Track how your emotional polarity changes over time.
+                  </p>
+
+                  <div className="chart-area">
+                    {loading ? (
+                      <div className="skeleton" style={{ height: "100%" }} />
+                    ) : (
+                      <SentimentTrendChart moods={moods} />
+                    )}
+                  </div>
+                </div>
+
+                <div className="card chart-card">
+                  <p className="chart-eyebrow">Emotion Distribution</p>
+                  <p className="chart-subtitle">
+                    See the share of each detected emotional state.
+                  </p>
+
+                  <div className="chart-area">
+                    {loading ? (
+                      <div className="skeleton" style={{ height: "100%" }} />
+                    ) : (
+                      <EmotionPieChart insight={insight} />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="card wordcloud-card">
+                <p className="section-eyebrow">Deep Insights</p>
+                <p className="section-title">Frequent Emotional Triggers</p>
+                <p className="section-note">
+                  Keywords extracted from your saved journal entries and mood
+                  logs.
+                </p>
+
+                <div className="wordcloud-inner">
+                  {loading ? (
+                    <div
+                      className="skeleton"
+                      style={{ height: "100%", borderRadius: 16 }}
+                    />
                   ) : (
-                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400">
-                      No recent entries found.
-                    </div>
+                    <MoodWordCloud moods={moods} />
                   )}
                 </div>
               </div>
+
+              <div className="bottom-grid">
+                <div className="bottom-left">
+                  <div className="card wellness-card">
+                    <p className="section-eyebrow">Weekly Wellness Summary</p>
+                    <p className="section-title">Emotional health overview</p>
+
+                    <div className="summary-items-grid">
+                      <SummaryItem
+                        label="Wellness Status"
+                        val={wellnessLabel}
+                        color="#14b8a6"
+                      />
+                      <SummaryItem
+                        label="Positive Entries"
+                        val={positiveCount}
+                        color="#10b981"
+                      />
+                      <SummaryItem
+                        label="Stress Signals"
+                        val={stressCount}
+                        color="#f43f5e"
+                      />
+                    </div>
+
+                    <div className="insight-pair">
+                      <div className="insight-box">
+                        <p className="insight-box-title">Insight Summary</p>
+                        <p className="insight-box-text">
+                          {`${totalEntries} entries recorded. Dominant mood was ${topEmotion}. Overall emotional balance appears ${wellnessLabel.toLowerCase()}.`}
+                        </p>
+                      </div>
+
+                      <div className="insight-box">
+                        <p className="insight-box-title">Suggested Next Step</p>
+                        <p className="insight-box-text">{recommendationText}</p>
+
+                        <div className="insight-actions">
+                          <Link
+                            to="/journal"
+                            className="insight-btn insight-btn-filled"
+                          >
+                            Journal
+                          </Link>
+
+                          <Link
+                            to="/mood-analysis"
+                            className="insight-btn insight-btn-outline"
+                          >
+                            Analyze
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="card">
+                    <BadgesCard moods={moods} streak={journalingStreak} />
+                  </div>
+                </div>
+
+                <div className="card logs-card">
+                  <div className="logs-header">
+                    <div>
+                      <p className="logs-title">Recent Logs</p>
+                      <p className="logs-subtitle">
+                        Your latest emotional entries
+                      </p>
+                    </div>
+
+                    <Link to="/mood-history" className="logs-viewall">
+                      View All →
+                    </Link>
+                  </div>
+
+                  <div className="logs-scroll">
+                    {loading ? (
+                      Array.from({ length: 4 }).map((_, index) => (
+                        <div
+                          key={index}
+                          className="skeleton"
+                          style={{ height: 82, borderRadius: 18 }}
+                        />
+                      ))
+                    ) : moods.length > 0 ? (
+                      moods
+                        .slice(0, 5)
+                        .map((item) => (
+                          <HistoryItem key={item._id || item.createdAt} item={item} />
+                        ))
+                    ) : (
+                      <div className="empty-state">No recent entries found.</div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
-const StatCard = ({ title, val, desc, emoji, color }) => (
-  <div className="group relative overflow-hidden rounded-[2rem] border border-white/60 bg-white/75 p-6 shadow-2xl shadow-sky-100/40 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-sky-200/60 dark:border-slate-700 dark:bg-slate-900/70 dark:shadow-none">
-    <div className={`absolute inset-x-0 top-0 h-1.5 rounded-t-[2rem] bg-gradient-to-r ${color}`} />
-    <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-slate-100/50 blur-2xl dark:bg-slate-700/20" />
+const StatCard = ({
+  title,
+  val,
+  desc,
+  emoji,
+  gradientFrom,
+  gradientTo,
+  accentColor,
+}) => (
+  <div className="stat-card">
+    <div
+      className="stat-card-glow"
+      style={{
+        background: `linear-gradient(90deg, ${gradientFrom}, ${gradientTo})`,
+      }}
+    />
 
-    <p className="text-[11px] font-semibold tracking-[0.22em] text-slate-400 uppercase">
-      {title}
-    </p>
+    <p className="stat-card-title">{title}</p>
 
-    <div className="mt-3 flex items-center gap-3">
-      {emoji && <span className="text-4xl drop-shadow-sm">{emoji}</span>}
-      <p className="text-3xl lg:text-4xl font-light capitalize text-slate-800 dark:text-white">
-        {val}
-      </p>
+    <div className="stat-card-val">
+      {emoji && <span className="stat-card-emoji">{emoji}</span>}
+      <span style={accentColor ? { color: accentColor } : {}}>{val}</span>
     </div>
 
-    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{desc}</p>
+    <p className="stat-card-desc">{desc}</p>
   </div>
 );
 
-const ChartWrapper = ({ title, subtitle, children }) => (
-  <div className="rounded-[2rem] border border-white/60 bg-white/75 p-6 shadow-2xl shadow-sky-100/40 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/70 dark:shadow-none">
-    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-      {title}
-    </p>
-    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
-    <div className="mt-5 h-96">{children}</div>
-  </div>
-);
-
-const SummaryItem = ({ label, val, bg }) => (
-  <div
-    className={`rounded-2xl border border-slate-100 ${bg} p-4 transition-colors dark:border-slate-700 dark:bg-slate-800`}
-  >
-    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-      {label}
-    </p>
-    <p className="mt-2 text-xl font-semibold text-slate-800 dark:text-white">
+const SummaryItem = ({ label, val, color }) => (
+  <div className="summary-item">
+    <p className="summary-item-label">{label}</p>
+    <p className="summary-item-val" style={{ color }}>
       {val}
     </p>
   </div>
 );
 
-const InsightBox = ({ title, text, showLinks }) => (
-  <div className="rounded-2xl border border-slate-200 bg-white/70 p-5 transition-colors dark:border-slate-700 dark:bg-slate-800/80">
-    <p className="text-sm font-semibold text-slate-700 dark:text-white">{title}</p>
-    <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-      {text}
-    </p>
-
-    {showLinks && (
-      <div className="mt-4 flex gap-3">
-        <Link
-          to="/journal"
-          className="rounded-xl bg-sky-600 px-4 py-2 text-sm text-white hover:bg-sky-700 transition"
-        >
-          Journal
-        </Link>
-        <Link
-          to="/mood-analysis"
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
-        >
-          Analyze
-        </Link>
-      </div>
-    )}
-  </div>
-);
-
 const HistoryItem = ({ item }) => {
   const emoji = EMOTION_EMOJI[item.predictedEmotion] || "😐";
+
   const date = item.createdAt
     ? new Date(item.createdAt).toLocaleDateString("en-GB", {
         day: "numeric",
@@ -434,26 +462,654 @@ const HistoryItem = ({ item }) => {
     : "N/A";
 
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/60 p-4 backdrop-blur-sm transition-all hover:bg-white/85 hover:-translate-y-0.5 dark:border-slate-700 dark:bg-slate-800/70 dark:hover:bg-slate-800">
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <p className="line-clamp-2 flex-1 text-sm text-slate-600 dark:text-slate-200 font-medium">
-          {item.inputText || "Check-in entry"}
+    <div className="history-item">
+      <div className="history-item-top">
+        <p className="history-item-text">
+          {item.inputText || item.text || item.content || "Check-in entry"}
         </p>
-        <span className="shrink-0 font-mono text-[10px] text-slate-400">
-          {date}
-        </span>
+
+        <span className="history-item-date">{date}</span>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <span className="rounded-3xl bg-teal-50 dark:bg-teal-900/30 px-3 py-1 text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-tighter shadow-sm border border-teal-100 dark:border-teal-800">
-          {emoji} {item.predictedEmotion}
+      <div className="history-tags">
+        <span className="tag tag-emotion">
+          {emoji} {item.predictedEmotion || "neutral"}
         </span>
-        <span className="rounded-3xl bg-slate-50 dark:bg-slate-700 px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-tighter shadow-sm border border-slate-100 dark:border-slate-600">
-          {item.sentimentLabel}
+
+        <span className="tag tag-sentiment">
+          {item.sentimentLabel || "neutral"}
         </span>
       </div>
     </div>
   );
 };
+
+const STYLES = (darkMode) => `
+  .dash-root {
+    display: flex;
+    min-height: 100svh;
+    background: ${
+      darkMode
+        ? "radial-gradient(circle at top left, rgba(20,184,166,0.1), transparent 34%), #080c14"
+        : "linear-gradient(135deg, #f8fafc 0%, #eef9ff 55%, #ecfeff 100%)"
+    };
+    font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .dash-root::before {
+    content: '';
+    position: fixed;
+    top: -120px;
+    left: -120px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(20,184,166,0.14) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .dash-root::after {
+    content: '';
+    position: fixed;
+    bottom: -100px;
+    right: -100px;
+    width: 450px;
+    height: 450px;
+    background: radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .dash-body {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+    min-width: 0;
+  }
+
+  .dash-main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 24px;
+  }
+
+  @media (min-width: 1024px) {
+    .dash-main {
+      padding: 36px 40px;
+    }
+  }
+
+  .dash-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+  }
+
+  .page-header,
+  .card,
+  .stat-card {
+    animation: dash-fade-up 0.45s ease both;
+  }
+
+  @keyframes dash-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .page-header {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    border-radius: 28px;
+    padding: 30px;
+    border: 1px solid ${
+      darkMode ? "rgba(255,255,255,0.09)" : "rgba(15,23,42,0.08)"
+    };
+    background: ${
+      darkMode ? "rgba(15,23,42,0.74)" : "rgba(255,255,255,0.78)"
+    };
+    backdrop-filter: blur(22px);
+    box-shadow: ${
+      darkMode
+        ? "0 24px 60px rgba(0,0,0,0.3)"
+        : "0 24px 60px rgba(15,23,42,0.08)"
+    };
+    position: relative;
+    overflow: hidden;
+  }
+
+  .page-header::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, #14b8a6, #0ea5e9, #8b5cf6);
+  }
+
+  @media (min-width: 768px) {
+    .page-header {
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+  }
+
+  .page-eyebrow {
+    font-size: 10px;
+    font-weight: 950;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #14b8a6;
+    margin-bottom: 9px;
+  }
+
+  .page-title {
+    font-size: clamp(34px, 5vw, 52px);
+    font-weight: 950;
+    color: ${darkMode ? "rgba(255,255,255,0.96)" : "#0f172a"};
+    line-height: 1.02;
+    letter-spacing: -0.045em;
+    margin: 0;
+  }
+
+  .page-title-accent {
+    background: linear-gradient(135deg, #14b8a6, #38bdf8, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .page-sub {
+    margin-top: 12px;
+    font-size: 13.5px;
+    color: ${darkMode ? "rgba(255,255,255,0.44)" : "rgba(15,23,42,0.56)"};
+    line-height: 1.75;
+  }
+
+  .page-sub strong {
+    color: ${darkMode ? "rgba(255,255,255,0.8)" : "#0f172a"};
+    font-weight: 950;
+  }
+
+  .header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 11px 20px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 950;
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #14b8a6, #0ea5e9);
+    color: #fff;
+    border: none;
+    box-shadow: 0 14px 28px rgba(20,184,166,0.24);
+  }
+
+  .btn-secondary {
+    background: ${
+      darkMode ? "rgba(255,255,255,0.055)" : "rgba(15,23,42,0.045)"
+    };
+    border: 1px solid ${
+      darkMode ? "rgba(255,255,255,0.1)" : "rgba(15,23,42,0.08)"
+    };
+    color: ${darkMode ? "rgba(255,255,255,0.58)" : "rgba(15,23,42,0.58)"};
+  }
+
+  .btn-primary:hover,
+  .btn-secondary:hover {
+    transform: translateY(-2px);
+  }
+
+  .card,
+  .stat-card {
+    border-radius: 26px;
+    border: 1px solid ${
+      darkMode ? "rgba(255,255,255,0.09)" : "rgba(15,23,42,0.08)"
+    };
+    background: ${
+      darkMode ? "rgba(15,23,42,0.74)" : "rgba(255,255,255,0.78)"
+    };
+    backdrop-filter: blur(22px);
+    box-shadow: ${
+      darkMode
+        ? "0 24px 60px rgba(0,0,0,0.24)"
+        : "0 24px 60px rgba(15,23,42,0.07)"
+    };
+    overflow: hidden;
+  }
+
+  .top-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  @media (min-width: 1280px) {
+    .top-grid {
+      grid-template-columns: 2fr 1fr;
+    }
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  @media (min-width: 1024px) {
+    .stat-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  .stat-card {
+    padding: 22px;
+    position: relative;
+    transition: all 0.22s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    border-color: ${
+      darkMode ? "rgba(255,255,255,0.15)" : "rgba(20,184,166,0.22)"
+    };
+  }
+
+  .stat-card-glow {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+  }
+
+  .stat-card-title {
+    font-size: 10px;
+    font-weight: 950;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: ${darkMode ? "rgba(255,255,255,0.34)" : "rgba(15,23,42,0.42)"};
+    margin-bottom: 15px;
+  }
+
+  .stat-card-val {
+    font-size: 32px;
+    font-weight: 950;
+    color: ${darkMode ? "rgba(255,255,255,0.92)" : "#0f172a"};
+    text-transform: capitalize;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  .stat-card-emoji {
+    font-size: 28px;
+  }
+
+  .stat-card-desc {
+    margin-top: 9px;
+    font-size: 12px;
+    font-weight: 750;
+    color: ${darkMode ? "rgba(255,255,255,0.36)" : "rgba(15,23,42,0.48)"};
+  }
+
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  @media (min-width: 1024px) {
+    .chart-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .chart-card {
+    padding: 24px;
+  }
+
+  .chart-eyebrow,
+  .section-eyebrow {
+    font-size: 10px;
+    font-weight: 950;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: ${darkMode ? "rgba(255,255,255,0.32)" : "rgba(15,23,42,0.42)"};
+    margin-bottom: 7px;
+  }
+
+  .chart-subtitle,
+  .section-note {
+    font-size: 13px;
+    color: ${darkMode ? "rgba(255,255,255,0.38)" : "rgba(15,23,42,0.5)"};
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .chart-area {
+    height: 320px;
+  }
+
+  .wordcloud-card,
+  .wellness-card {
+    padding: 28px;
+  }
+
+  .section-title {
+    font-size: 21px;
+    font-weight: 950;
+    color: ${darkMode ? "rgba(255,255,255,0.88)" : "#0f172a"};
+    margin-bottom: 5px;
+  }
+
+  .wordcloud-inner {
+    height: 320px;
+    border-radius: 20px;
+    border: 1px solid ${
+      darkMode ? "rgba(255,255,255,0.06)" : "rgba(15,23,42,0.06)"
+    };
+    background: ${darkMode ? "rgba(0,0,0,0.18)" : "rgba(248,250,252,0.82)"};
+    padding: 12px;
+    overflow: hidden;
+  }
+
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  @media (min-width: 1280px) {
+    .bottom-grid {
+      grid-template-columns: 2fr 1fr;
+    }
+  }
+
+  .bottom-left {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .summary-items-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 22px 0;
+  }
+
+  @media(max-width: 640px) {
+    .summary-items-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .summary-item,
+  .insight-box,
+  .history-item {
+    background: ${darkMode ? "rgba(255,255,255,0.04)" : "rgba(15,23,42,0.035)"};
+    border: 1px solid ${
+      darkMode ? "rgba(255,255,255,0.065)" : "rgba(15,23,42,0.06)"
+    };
+    border-radius: 18px;
+  }
+
+  .summary-item {
+    padding: 16px;
+  }
+
+  .summary-item-label {
+    font-size: 10px;
+    font-weight: 950;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: ${darkMode ? "rgba(255,255,255,0.3)" : "rgba(15,23,42,0.42)"};
+    margin-bottom: 9px;
+  }
+
+  .summary-item-val {
+    font-size: 22px;
+    font-weight: 950;
+    text-transform: capitalize;
+    letter-spacing: -0.03em;
+  }
+
+  .insight-pair {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  @media (min-width: 768px) {
+    .insight-pair {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .insight-box {
+    padding: 18px;
+  }
+
+  .insight-box-title {
+    font-size: 12px;
+    font-weight: 950;
+    color: ${darkMode ? "rgba(255,255,255,0.62)" : "#0f172a"};
+    margin-bottom: 8px;
+  }
+
+  .insight-box-text {
+    font-size: 13px;
+    line-height: 1.7;
+    font-weight: 600;
+    color: ${darkMode ? "rgba(255,255,255,0.44)" : "rgba(15,23,42,0.56)"};
+  }
+
+  .insight-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+  }
+
+  .insight-btn {
+    padding: 8px 15px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 950;
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+
+  .insight-btn-filled {
+    background: linear-gradient(135deg, #14b8a6, #0ea5e9);
+    color: #fff;
+    border: none;
+  }
+
+  .insight-btn-outline {
+    background: ${darkMode ? "rgba(255,255,255,0.05)" : "rgba(15,23,42,0.045)"};
+    border: 1px solid ${
+      darkMode ? "rgba(255,255,255,0.1)" : "rgba(15,23,42,0.08)"
+    };
+    color: ${darkMode ? "rgba(255,255,255,0.58)" : "rgba(15,23,42,0.58)"};
+  }
+
+  .insight-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .logs-card {
+    padding: 22px;
+  }
+
+  .logs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .logs-title {
+    font-size: 15px;
+    font-weight: 950;
+    color: ${darkMode ? "rgba(255,255,255,0.86)" : "#0f172a"};
+  }
+
+  .logs-subtitle {
+    font-size: 11.5px;
+    color: ${darkMode ? "rgba(255,255,255,0.32)" : "rgba(15,23,42,0.46)"};
+    margin-top: 3px;
+  }
+
+  .logs-viewall {
+    font-size: 12px;
+    font-weight: 950;
+    color: #14b8a6;
+    text-decoration: none;
+  }
+
+  .logs-scroll {
+    max-height: 600px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(20,184,166,0.35) transparent;
+  }
+
+  .logs-scroll::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .logs-scroll::-webkit-scrollbar-thumb {
+    background: rgba(20,184,166,0.35);
+    border-radius: 999px;
+  }
+
+  .history-item {
+    padding: 15px 16px;
+    transition: all 0.18s ease;
+  }
+
+  .history-item:hover {
+    transform: translateX(3px);
+    border-color: rgba(20,184,166,0.22);
+    background: rgba(20,184,166,0.07);
+  }
+
+  .history-item-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 11px;
+  }
+
+  .history-item-text {
+    font-size: 13px;
+    color: ${darkMode ? "rgba(255,255,255,0.62)" : "rgba(15,23,42,0.62)"};
+    font-weight: 650;
+    line-height: 1.55;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .history-item-date {
+    font-size: 10px;
+    font-family: monospace;
+    color: ${darkMode ? "rgba(255,255,255,0.28)" : "rgba(15,23,42,0.38)"};
+    flex-shrink: 0;
+  }
+
+  .history-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 950;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .tag-emotion {
+    background: rgba(20,184,166,0.12);
+    border: 1px solid rgba(20,184,166,0.22);
+    color: #2dd4bf;
+  }
+
+  .tag-sentiment {
+    background: ${
+      darkMode ? "rgba(255,255,255,0.055)" : "rgba(15,23,42,0.045)"
+    };
+    border: 1px solid ${
+      darkMode ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)"
+    };
+    color: ${darkMode ? "rgba(255,255,255,0.42)" : "rgba(15,23,42,0.5)"};
+  }
+
+  .empty-state {
+    padding: 34px 18px;
+    text-align: center;
+    border: 1px dashed ${
+      darkMode ? "rgba(255,255,255,0.1)" : "rgba(15,23,42,0.12)"
+    };
+    border-radius: 18px;
+    font-size: 13px;
+    font-weight: 750;
+    color: ${darkMode ? "rgba(255,255,255,0.32)" : "rgba(15,23,42,0.42)"};
+  }
+
+  .skeleton {
+    background: ${darkMode ? "rgba(255,255,255,0.06)" : "rgba(15,23,42,0.08)"};
+    border-radius: 16px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.42;
+    }
+  }
+`;
 
 export default DashboardPage;

@@ -2,21 +2,48 @@ const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
-    // Better config options (modern Mongo settings)
+    if (!process.env.MONGO_URI) {
+      throw new Error("MONGO_URI is missing in environment variables");
+    }
+
     const conn = await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 5000, // fail fast
-      autoIndex: true, // dev only (disable in prod if needed)
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      autoIndex: true, // Disable in production if needed
     });
 
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
 
-    // 🔄 Connection events (VERY IMPORTANT 🔥)
+    // ================================
+    // MongoDB Connection Events
+    // ================================
+
+    mongoose.connection.on("connected", () => {
+      console.log("🟢 MongoDB connection established");
+    });
+
     mongoose.connection.on("disconnected", () => {
-      console.warn("⚠️ MongoDB Disconnected...");
+      console.warn("⚠️ MongoDB disconnected");
     });
 
     mongoose.connection.on("reconnected", () => {
-      console.log("🔁 MongoDB Reconnected");
+      console.log("🔁 MongoDB reconnected");
+    });
+
+    mongoose.connection.on("error", (err) => {
+      console.error(`❌ MongoDB error: ${err.message}`);
+    });
+
+    // Graceful shutdown
+    process.on("SIGINT", async () => {
+      try {
+        await mongoose.connection.close();
+        console.log("🛑 MongoDB connection closed");
+        process.exit(0);
+      } catch (err) {
+        console.error("❌ Error during MongoDB shutdown:", err.message);
+        process.exit(1);
+      }
     });
 
   } catch (error) {

@@ -2,14 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import { ThemeContext } from "./themeContextObject";
 
 const getInitialTheme = () => {
-  const saved = localStorage.getItem("theme");
+  // Local storage preference
+  const savedTheme = localStorage.getItem("theme");
 
-  if (saved === "dark") return true;
-  if (saved === "light") return false;
+  if (savedTheme === "dark") return true;
+  if (savedTheme === "light") return false;
 
-  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-  if (typeof prefersDark === "boolean") return prefersDark;
+  // System preference
+  if (window.matchMedia) {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
 
+  // Time-based fallback
   const hour = new Date().getHours();
   return hour >= 18 || hour < 6;
 };
@@ -17,6 +21,7 @@ const getInitialTheme = () => {
 export const ThemeProvider = ({ children }) => {
   const [darkMode, setDarkMode] = useState(getInitialTheme);
 
+  // Apply theme to HTML
   useEffect(() => {
     const root = document.documentElement;
 
@@ -28,6 +33,26 @@ export const ThemeProvider = ({ children }) => {
       localStorage.setItem("theme", "light");
     }
   }, [darkMode]);
+
+  // Listen for system theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const handleThemeChange = (e) => {
+      const savedTheme = localStorage.getItem("theme");
+
+      // Only auto-switch if user hasn't manually selected
+      if (!savedTheme) {
+        setDarkMode(e.matches);
+      }
+    };
+
+    mediaQuery.addEventListener("change", handleThemeChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleThemeChange);
+    };
+  }, []);
 
   const toggleTheme = () => {
     setDarkMode((prev) => !prev);
@@ -41,12 +66,16 @@ export const ThemeProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       darkMode,
+      theme: darkMode ? "dark" : "light",
       toggleTheme,
       setTheme,
-      theme: darkMode ? "dark" : "light",
     }),
     [darkMode]
   );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>
+      {children}
+    </ThemeContext.Provider>
+  );
 };

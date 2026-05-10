@@ -3,16 +3,35 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 const MoodEntry = require("../models/MoodEntry");
 
-// --------------------------------------------------
-// 1. Admin Summary
-// --------------------------------------------------
+const AI_BASE_URL = process.env.AI_BASE_URL || "http://127.0.0.1:8000";
+
+const sendError = (res, message, error) => {
+  console.error(message, error.message);
+
+  return res.status(500).json({
+    success: false,
+    message,
+    error: error.message,
+  });
+};
+
+// ======================================================
+// ADMIN SUMMARY
+// ======================================================
+
 const getAdminSummary = async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const totalMoodEntries = await MoodEntry.countDocuments();
-    const totalHighRiskEntries = await MoodEntry.countDocuments({
-      supportLevel: "high",
-    });
+    const [totalUsers, totalMoodEntries, totalHighRiskEntries] =
+      await Promise.all([
+        User.countDocuments(),
+        MoodEntry.countDocuments(),
+        MoodEntry.countDocuments({
+          $or: [
+            { supportLevel: "high" },
+            { riskScore: { $gte: 75 } },
+          ],
+        }),
+      ]);
 
     return res.status(200).json({
       success: true,
@@ -24,67 +43,73 @@ const getAdminSummary = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("getAdminSummary error:", error.message);
-    return res.status(500).json({
-      success: false,
-      message: "Admin summary failed",
-      error: error.message,
-    });
+    return sendError(res, "Admin summary failed", error);
   }
 };
 
-// --------------------------------------------------
-// 2. Get All Users with Analytics
-// --------------------------------------------------
+// ======================================================
+// ADMIN USERS
+// ======================================================
+
 const getAdminUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password").sort({ createdAt: -1 });
-    const moods = await MoodEntry.find().sort({ createdAt: -1 });
+    const users = await User.find()
+      .select("-password")
+      .sort({ createdAt: -1 })
+      .lean();
 
-    const userStatsMap = new Map();
+    const stats = await MoodEntry.aggregate([
+      { $sort: { createdAt: -1 } },
 
-    moods.forEach((mood) => {
-      const userId = String(mood.user);
+      {
+        $group: {
+          _id: "$user",
 
-      if (!userStatsMap.has(userId)) {
-        userStatsMap.set(userId, {
-          moodCount: 0,
-          highSupportCount: 0,
-          negativeEntries: 0,
-          latestMood: null,
-        });
-      }
+          moodCount: { $sum: 1 },
 
-      const stats = userStatsMap.get(userId);
-      stats.moodCount += 1;
+          highSupportCount: {
+            $sum: {
+              $cond: [
+                {
+                  $or: [
+                    { $eq: ["$supportLevel", "high"] },
+                    { $gte: ["$riskScore", 75] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
 
-      if (mood.supportLevel === "high") {
-        stats.highSupportCount += 1;
-      }
+          negativeEntries: {
+            $sum: {
+              $cond: [
+                { $eq: ["$sentimentLabel", "negative"] },
+                1,
+                0,
+              ],
+            },
+          },
 
-      if (mood.sentimentLabel === "negative") {
-        stats.negativeEntries += 1;
-      }
+          latestMood: { $first: "$predictedEmotion" },
+        },
+      },
+    ]);
 
-      if (!stats.latestMood) {
-        stats.latestMood = mood.predictedEmotion || "neutral";
-      }
-    });
+    const statsMap = new Map(
+      stats.map((s) => [String(s._id), s])
+    );
 
     const enrichedUsers = users.map((user) => {
-      const stats = userStatsMap.get(String(user._id)) || {
-        moodCount: 0,
-        highSupportCount: 0,
-        negativeEntries: 0,
-        latestMood: "N/A",
-      };
+      const userStats = statsMap.get(String(user._id));
 
       return {
-        ...user.toObject(),
-        moodCount: stats.moodCount,
-        highSupportCount: stats.highSupportCount,
-        negativeEntries: stats.negativeEntries,
-        latestMood: stats.latestMood,
+        ...user,
+        moodCount: userStats?.moodCount || 0,
+        highSupportCount: userStats?.highSupportCount || 0,
+        negativeEntries: userStats?.negativeEntries || 0,
+        latestMood: userStats?.latestMood || "N/A",
       };
     });
 
@@ -94,28 +119,27 @@ const getAdminUsers = async (req, res) => {
       data: enrichedUsers,
     });
   } catch (error) {
-    console.error("getAdminUsers error:", error.message);
-    return res.status(500).json({
-      success: false,
-      message: "Users fetch failed",
-      error: error.message,
-    });
+    return sendError(res, "Users fetch failed", error);
   }
 };
 
-// --------------------------------------------------
-// 3. Get High Risk Entries
-// --------------------------------------------------
+// ======================================================
+// HIGH RISK ENTRIES
+// ======================================================
+
 const getHighRiskEntries = async (req, res) => {
   try {
     const entries = await MoodEntry.find({
-  $or: [
-    { supportLevel: "high" },
-    { riskScore: { $gte: 75 } },
-  ],
-})
+      reviewed: { $ne: true },
+
+      $or: [
+        { supportLevel: "high" },
+        { riskScore: { $gte: 75 } },
+      ],
+    })
       .populate("user", "fullName email role")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     return res.status(200).json({
       success: true,
@@ -123,72 +147,95 @@ const getHighRiskEntries = async (req, res) => {
       data: entries,
     });
   } catch (error) {
-    console.error("getHighRiskEntries error:", error.message);
-    return res.status(500).json({
-      success: false,
-      message: "High risk fetch failed",
-      error: error.message,
-    });
+    return sendError(res, "High risk fetch failed", error);
   }
 };
 
-// --------------------------------------------------
-// 4. Get Support Users with Aggregated Stats
-// --------------------------------------------------
+// ======================================================
+// SUPPORT USERS
+// ======================================================
+
 const getSupportUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
-    const moods = await MoodEntry.find().sort({ createdAt: -1 });
+    const supportStats = await MoodEntry.aggregate([
+      {
+        $group: {
+          _id: "$user",
 
-    const statsMap = new Map();
+          totalEntries: { $sum: 1 },
 
-    moods.forEach((mood) => {
-      const userId = String(mood.user);
+          highSupportEntries: {
+            $sum: {
+              $cond: [
+                {
+                  $or: [
+                    { $eq: ["$supportLevel", "high"] },
+                    { $gte: ["$riskScore", 75] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
 
-      if (!statsMap.has(userId)) {
-        statsMap.set(userId, {
-          totalEntries: 0,
-          highSupportEntries: 0,
-          negativeEntries: 0,
-        });
-      }
+          negativeEntries: {
+            $sum: {
+              $cond: [
+                { $eq: ["$sentimentLabel", "negative"] },
+                1,
+                0,
+              ],
+            },
+          },
+        },
+      },
 
-      const stats = statsMap.get(userId);
-      stats.totalEntries += 1;
+      {
+        $match: {
+          $or: [
+            { highSupportEntries: { $gt: 0 } },
+            { negativeEntries: { $gt: 0 } },
+          ],
+        },
+      },
 
-      if (mood.supportLevel === "high") {
-        stats.highSupportEntries += 1;
-      }
+      {
+        $sort: {
+          highSupportEntries: -1,
+          negativeEntries: -1,
+        },
+      },
+    ]);
 
-      if (mood.sentimentLabel === "negative") {
-        stats.negativeEntries += 1;
-      }
-    });
+    const userIds = supportStats
+      .map((s) => s._id)
+      .filter(Boolean);
 
-    const supportUsers = users
-      .map((user) => {
-        const stats = statsMap.get(String(user._id)) || {
-          totalEntries: 0,
-          highSupportEntries: 0,
-          negativeEntries: 0,
-        };
+    const users = await User.find({
+      _id: { $in: userIds },
+    })
+      .select("-password")
+      .lean();
+
+    const userMap = new Map(
+      users.map((u) => [String(u._id), u])
+    );
+
+    const supportUsers = supportStats
+      .map((stats) => {
+        const user = userMap.get(String(stats._id));
+
+        if (!user) return null;
 
         return {
-          ...user.toObject(),
+          ...user,
           totalEntries: stats.totalEntries,
           highSupportEntries: stats.highSupportEntries,
           negativeEntries: stats.negativeEntries,
         };
       })
-      .filter(
-        (user) => user.highSupportEntries > 0 || user.negativeEntries > 0
-      )
-      .sort((a, b) => {
-        if (b.highSupportEntries !== a.highSupportEntries) {
-          return b.highSupportEntries - a.highSupportEntries;
-        }
-        return b.negativeEntries - a.negativeEntries;
-      });
+      .filter(Boolean);
 
     return res.status(200).json({
       success: true,
@@ -196,60 +243,259 @@ const getSupportUsers = async (req, res) => {
       data: supportUsers,
     });
   } catch (error) {
-    console.error("getSupportUsers error:", error.message);
-    return res.status(500).json({
-      success: false,
-      message: "Support users fetch failed",
-      error: error.message,
-    });
+    return sendError(res, "Support users fetch failed", error);
   }
 };
 
-// --------------------------------------------------
-// 5. Get Live System Status
-// --------------------------------------------------
+// ======================================================
+// SYSTEM STATUS
+// ======================================================
+
 const getSystemStatus = async (req, res) => {
   try {
-    const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const last24Hours = new Date(
+      Date.now() - 24 * 60 * 60 * 1000
+    );
 
     const activeUsers = await User.countDocuments({
       lastLogin: { $gte: last24Hours },
       isActive: true,
     });
 
-    const dbReadyState = mongoose.connection.readyState;
-    const database = dbReadyState === 1 ? "Healthy" : "Disconnected";
+    const database =
+      mongoose.connection.readyState === 1
+        ? "Healthy"
+        : "Disconnected";
 
     let aiModelApi = "Disconnected";
 
     try {
-      await axios.get("http://127.0.0.1:8000/docs", {
-        timeout: 3000,
+      await axios.get(`${AI_BASE_URL}/docs`, {
+        timeout: 5000,
       });
+
       aiModelApi = "Connected";
-    } catch (aiError) {
+    } catch (error) {
+      console.error(
+        "AI health check failed:",
+        error.message
+      );
+
       aiModelApi = "Disconnected";
     }
-
-    const serverStatus = "Operational";
 
     return res.status(200).json({
       success: true,
       message: "System status fetched successfully",
+
       data: {
-        serverStatus,
+        serverStatus: "Operational",
         aiModelApi,
         activeUsers,
         database,
       },
     });
   } catch (error) {
-    console.error("getSystemStatus error:", error.message);
-    return res.status(500).json({
-      success: false,
-      message: "System status fetch failed",
-      error: error.message,
+    return sendError(
+      res,
+      "System status fetch failed",
+      error
+    );
+  }
+};
+
+// ======================================================
+// CHATBOT STATS
+// ======================================================
+
+const getChatbotStats = async (req, res) => {
+  try {
+    const totalChats = await MoodEntry.countDocuments();
+
+    const stats = await MoodEntry.aggregate([
+      {
+        $facet: {
+          topEmotionAgg: [
+            {
+              $match: {
+                predictedEmotion: {
+                  $exists: true,
+                  $ne: null,
+                },
+              },
+            },
+
+            {
+              $group: {
+                _id: "$predictedEmotion",
+                count: { $sum: 1 },
+              },
+            },
+
+            { $sort: { count: -1 } },
+
+            { $limit: 1 },
+          ],
+
+          sentimentAgg: [
+            {
+              $match: {
+                sentimentLabel: {
+                  $exists: true,
+                  $ne: null,
+                },
+              },
+            },
+
+            {
+              $group: {
+                _id: "$sentimentLabel",
+                count: { $sum: 1 },
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    const result = stats[0] || {};
+
+    const topEmotion =
+      result.topEmotionAgg?.[0]?._id || "N/A";
+
+    let positive = 0;
+    let negative = 0;
+    let neutral = 0;
+    let total = 0;
+
+    (result.sentimentAgg || []).forEach((item) => {
+      const label = String(item._id || "").toLowerCase();
+
+      total += item.count;
+
+      if (label === "positive") {
+        positive += item.count;
+      } else if (label === "negative") {
+        negative += item.count;
+      } else {
+        neutral += item.count;
+      }
     });
+
+    let avgSentiment = "Neutral";
+
+    if (total > 0) {
+      const positiveRatio = positive / total;
+      const negativeRatio = negative / total;
+
+      if (
+        positiveRatio > negativeRatio &&
+        positiveRatio >= 0.4
+      ) {
+        avgSentiment = `Positive (${Math.round(
+          positiveRatio * 100
+        )}%)`;
+      } else if (
+        negativeRatio > positiveRatio &&
+        negativeRatio >= 0.4
+      ) {
+        avgSentiment = `Negative (${Math.round(
+          negativeRatio * 100
+        )}%)`;
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Chatbot stats fetched successfully",
+
+      data: {
+        totalChats,
+        avgSentiment,
+        topEmotion,
+
+        sentimentBreakdown: {
+          positive,
+          negative,
+          neutral,
+        },
+      },
+    });
+  } catch (error) {
+    return sendError(
+      res,
+      "Chatbot stats fetch failed",
+      error
+    );
+  }
+};
+
+// ======================================================
+// MARK ALERT AS REVIEWED
+// ======================================================
+
+const markAlertReviewed = async (req, res) => {
+  try {
+    const alert = await MoodEntry.findByIdAndUpdate(
+      req.params.id,
+      {
+        reviewed: true,
+        reviewedAt: new Date(),
+        reviewedBy: req.user?._id,
+      },
+      { new: true }
+    );
+
+    if (!alert) {
+      return res.status(404).json({
+        success: false,
+        message: "Alert not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Alert marked as reviewed",
+      data: alert,
+    });
+  } catch (error) {
+    return sendError(
+      res,
+      "Mark reviewed failed",
+      error
+    );
+  }
+};
+
+// ======================================================
+// CONTACT RISK USER
+// ======================================================
+
+const contactRiskUser = async (req, res) => {
+  try {
+    const alert = await MoodEntry.findById(
+      req.params.id
+    ).populate("user", "fullName email role");
+
+    if (!alert) {
+      return res.status(404).json({
+        success: false,
+        message: "Alert not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User contact details fetched",
+      email: alert.user?.email,
+      user: alert.user?.fullName,
+    });
+  } catch (error) {
+    return sendError(
+      res,
+      "Contact user failed",
+      error
+    );
   }
 };
 
@@ -259,4 +505,7 @@ module.exports = {
   getHighRiskEntries,
   getSupportUsers,
   getSystemStatus,
+  getChatbotStats,
+  markAlertReviewed,
+  contactRiskUser,
 };

@@ -1,10 +1,26 @@
 import axios from "axios";
 
+// ======================================================
+// AUTH AXIOS INSTANCE
+// ======================================================
+
 const API = axios.create({
-  baseURL: "http://localhost:5000/api/auth",
+  baseURL:
+    import.meta.env.VITE_AUTH_API_URL ||
+    "http://localhost:5000/api/auth",
+
+  timeout: 60000,
+
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-// Auto attach token for protected routes like /me
+// ======================================================
+// REQUEST INTERCEPTOR
+// Auto Attach JWT Token
+// ======================================================
+
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -18,20 +34,51 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Register
+// ======================================================
+// RESPONSE INTERCEPTOR
+// Global Auth Error Handling
+// ======================================================
+
+API.interceptors.response.use(
+  (response) => response,
+
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+// ======================================================
+// HELPER
+// ======================================================
+
+const handleResponse = (response) => response.data;
+
+// ======================================================
+// AUTH API FUNCTIONS
+// ======================================================
+
 export const registerUserApi = async (userData) => {
   const response = await API.post("/register", userData);
-  return response.data;
+  return handleResponse(response);
 };
 
-// Login
 export const loginUserApi = async (userData) => {
   const response = await API.post("/login", userData);
-  return response.data;
+  return handleResponse(response);
 };
 
-// Get current logged-in user
 export const getMeApi = async () => {
   const response = await API.get("/me");
-  return response.data;
+  return handleResponse(response);
 };
+
+export default API;

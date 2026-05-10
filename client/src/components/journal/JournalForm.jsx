@@ -2,8 +2,11 @@ import { useState, useEffect } from "react";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import "regenerator-runtime/runtime";
 import { saveJournalApi } from "../../api/moodApi";
+import { useTheme } from "../../context/useTheme";
 
 const JournalForm = ({ onSaved }) => {
+  const { darkMode } = useTheme();
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
@@ -11,8 +14,8 @@ const JournalForm = ({ onSaved }) => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const charCount = content.length;
   const maxSuggested = 1200;
+  const charCount = content.length;
 
   const {
     transcript,
@@ -22,15 +25,12 @@ const JournalForm = ({ onSaved }) => {
   } = useSpeechRecognition();
 
   useEffect(() => {
-    if (transcript) {
-      setContent(transcript);
-    }
+    if (transcript) setContent(transcript);
   }, [transcript]);
 
   const handleToggleListening = () => {
-    if (listening) {
-      SpeechRecognition.stopListening();
-    } else {
+    if (listening) SpeechRecognition.stopListening();
+    else {
       resetTranscript();
       SpeechRecognition.startListening({ continuous: true });
     }
@@ -78,147 +78,388 @@ const JournalForm = ({ onSaved }) => {
 
   if (!browserSupportsSpeechRecognition) {
     return (
-      <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50 p-5 text-center text-sm text-rose-600 dark:border-rose-800/50 dark:bg-rose-900/20 dark:text-rose-400">
-        Your browser does not support voice input.
-      </div>
+      <>
+        <style>{STYLES(darkMode)}</style>
+        <div className="jf-alert error">
+          <span>⚠️</span>
+          Your browser does not support voice input.
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="w-full">
-      <div className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
-          Journal Entry Form
-        </p>
-        <h2 className="mt-2 text-2xl font-semibold text-slate-800 dark:text-white">
-          Write your thoughts
-        </h2>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-          You can type or use voice input in English for better AI mood analysis.
-        </p>
-      </div>
+    <>
+      <style>{STYLES(darkMode)}</style>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Title */}
-        <div>
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-            Entry Title
-          </label>
-          <input
-            type="text"
-            placeholder="Give this reflection a short title..."
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-[1.5rem] border border-sky-100 bg-white/90 px-5 py-4 text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-teal-400 focus:ring-4 focus:ring-teal-100 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-200 dark:focus:border-teal-500 dark:focus:ring-teal-900/20"
-          />
+      <div className="jf-card">
+        <div className="jf-glow" />
+
+        <div className="jf-header">
+          <p className="jf-eyebrow">Journal Entry Form</p>
+          <h2 className="jf-title">Write your thoughts</h2>
+          <p className="jf-subtitle">
+            Type or use voice input in English for better AI mood analysis.
+          </p>
         </div>
 
-        {/* Content */}
-        <div>
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-              How are you feeling today?
+        <form onSubmit={handleSubmit} className="jf-form">
+          <div>
+            <label className="jf-label">Entry Title</label>
+            <input
+              type="text"
+              placeholder="Give this reflection a short title..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="jf-input"
+            />
+          </div>
+
+          <div>
+            <div className="jf-label-row">
+              <label className="jf-label">How are you feeling today?</label>
+              <span className={charCount > maxSuggested ? "jf-count danger" : "jf-count"}>
+                {charCount}/{maxSuggested}
+              </span>
+            </div>
+
+            <div className="jf-textarea-wrap">
+              <textarea
+                rows="9"
+                placeholder={
+                  listening
+                    ? "Listening... speak now"
+                    : "Write your thoughts, emotions, experiences, or concerns here..."
+                }
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className={`jf-textarea${listening ? " listening" : ""}`}
+                required
+              />
+
+              <button
+                type="button"
+                onClick={handleToggleListening}
+                className={`jf-mic-btn${listening ? " active" : ""}`}
+                title={listening ? "Stop Listening" : "Start Voice Input"}
+              >
+                {listening ? "🛑" : "🎤"}
+              </button>
+            </div>
+
+            {listening && (
+              <p className="jf-listening">
+                <span />
+                MindTuneX is listening...
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="jf-label">
+              Tags <span>(optional)</span>
             </label>
 
-            <span
-              className={`text-xs font-medium ${
-                charCount > maxSuggested
-                  ? "text-rose-400"
-                  : "text-slate-400 dark:text-slate-500"
-              }`}
-            >
-              {charCount}/{maxSuggested}
-            </span>
-          </div>
-
-          <div className="relative">
-            <textarea
-              rows="9"
-              placeholder={
-                listening
-                  ? "Listening... speak now"
-                  : "Write your thoughts, emotions, experiences, or concerns here..."
-              }
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className={`w-full resize-none rounded-[1.75rem] border bg-white/90 p-6 pr-20 text-slate-700 outline-none transition-all placeholder:text-slate-400 ${
-                listening
-                  ? "border-teal-400 ring-4 ring-teal-100 dark:border-teal-500 dark:ring-teal-900/20"
-                  : "border-sky-100 focus:border-teal-400 focus:ring-4 focus:ring-teal-100 dark:border-slate-600 dark:focus:border-teal-500 dark:focus:ring-teal-900/20"
-              } dark:bg-slate-900/50 dark:text-slate-200`}
-              required
+            <input
+              type="text"
+              placeholder="university, work, stress..."
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              className="jf-input"
             />
 
+            <p className="jf-help">
+              Separate tags with commas to categorize your entry.
+            </p>
+          </div>
+
+          {message && (
+            <div className="jf-alert success">
+              <span>✅</span>
+              {message}
+            </div>
+          )}
+
+          {error && (
+            <div className="jf-alert error">
+              <span>⚠️</span>
+              {error}
+            </div>
+          )}
+
+          <div className="jf-submit-row">
+            <p className="jf-note">
+              Your journal entry will be analysed to detect emotional signals and generate insights.
+            </p>
+
             <button
-              type="button"
-              onClick={handleToggleListening}
-              className={`absolute bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg transition-all duration-300 ${
-                listening
-                  ? "bg-rose-500 animate-pulse scale-110"
-                  : "bg-teal-500 hover:bg-teal-600"
-              }`}
-              title={listening ? "Stop Listening" : "Start Voice Input"}
+              type="submit"
+              disabled={loading || !content.trim()}
+              className="jf-submit-btn"
             >
-              {listening ? "🛑" : "🎤"}
+              {loading ? "Analysing Mood..." : "Save Journal Entry"}
             </button>
           </div>
-
-          {listening && (
-            <p className="mt-3 text-center text-xs font-bold uppercase tracking-[0.22em] text-teal-600 animate-pulse dark:text-teal-400">
-              MindTuneX is listening...
-            </p>
-          )}
-        </div>
-
-        {/* Tags */}
-        <div>
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-            Tags <span className="text-slate-300 dark:text-slate-600">(optional)</span>
-          </label>
-          <input
-            type="text"
-            placeholder="university, work, stress..."
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            className="w-full rounded-[1.5rem] border border-sky-100 bg-white/90 px-5 py-4 text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-teal-400 focus:ring-4 focus:ring-teal-100 dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-200 dark:focus:border-teal-500 dark:focus:ring-teal-900/20"
-          />
-          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-            Separate tags with commas to categorize your entry.
-          </p>
-        </div>
-
-        {/* Alerts */}
-        {message && (
-          <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-700 animate-in fade-in zoom-in-95 dark:border-emerald-800/50 dark:bg-emerald-900/20 dark:text-emerald-400">
-            <span>✅</span>
-            {message}
-          </div>
-        )}
-
-        {error && (
-          <div className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 text-sm text-rose-700 animate-in fade-in zoom-in-95 dark:border-rose-800/50 dark:bg-rose-900/20 dark:text-rose-400">
-            <span>⚠️</span>
-            {error}
-          </div>
-        )}
-
-        {/* Submit */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-slate-400 dark:text-slate-500">
-            Your journal entry will be analysed to detect emotional signals and generate insights.
-          </p>
-
-          <button
-            type="submit"
-            disabled={loading || !content.trim()}
-            className="rounded-3xl bg-gradient-to-r from-teal-500 to-sky-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-teal-200 transition-all hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-50 dark:shadow-none"
-          >
-            {loading ? "Analysing Mood..." : "Save Journal Entry"}
-          </button>
-        </div>
-      </form>
-    </div>
+        </form>
+      </div>
+    </>
   );
 };
+
+const STYLES = (darkMode) => `
+  .jf-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid ${darkMode ? "rgba(255,255,255,0.09)" : "rgba(15,23,42,0.08)"};
+    background: ${darkMode ? "rgba(15,23,42,0.72)" : "rgba(255,255,255,0.78)"};
+    padding: 26px;
+    font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+    backdrop-filter: blur(22px);
+    box-shadow: ${darkMode ? "0 22px 55px rgba(0,0,0,0.28)" : "0 22px 55px rgba(15,23,42,0.08)"};
+  }
+
+  .jf-glow {
+    position: absolute;
+    right: -90px;
+    top: -90px;
+    width: 260px;
+    height: 260px;
+    background: radial-gradient(circle, rgba(20,184,166,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .jf-header,
+  .jf-form {
+    position: relative;
+    z-index: 1;
+  }
+
+  .jf-header {
+    margin-bottom: 24px;
+  }
+
+  .jf-eyebrow,
+  .jf-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: ${darkMode ? "rgba(255,255,255,0.36)" : "rgba(15,23,42,0.42)"};
+  }
+
+  .jf-title {
+    margin-top: 8px;
+    font-size: 24px;
+    font-weight: 900;
+    color: ${darkMode ? "rgba(255,255,255,0.95)" : "#0f172a"};
+  }
+
+  .jf-subtitle,
+  .jf-help,
+  .jf-note {
+    color: ${darkMode ? "rgba(255,255,255,0.42)" : "rgba(15,23,42,0.52)"};
+  }
+
+  .jf-subtitle {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .jf-form {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .jf-label {
+    display: block;
+    margin-bottom: 9px;
+  }
+
+  .jf-label span {
+    color: ${darkMode ? "rgba(255,255,255,0.22)" : "rgba(15,23,42,0.32)"};
+  }
+
+  .jf-label-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .jf-count {
+    font-size: 12px;
+    font-weight: 800;
+    color: ${darkMode ? "rgba(255,255,255,0.36)" : "rgba(15,23,42,0.42)"};
+  }
+
+  .jf-count.danger {
+    color: #fb7185;
+  }
+
+  .jf-input,
+  .jf-textarea {
+    width: 100%;
+    border-radius: 22px;
+    border: 1px solid ${darkMode ? "rgba(255,255,255,0.09)" : "rgba(15,23,42,0.09)"};
+    background: ${darkMode ? "rgba(15,23,42,0.58)" : "rgba(255,255,255,0.82)"};
+    color: ${darkMode ? "rgba(255,255,255,0.86)" : "#0f172a"};
+    outline: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+
+  .jf-input {
+    padding: 15px 18px;
+  }
+
+  .jf-textarea {
+    resize: none;
+    padding: 20px 76px 20px 20px;
+    line-height: 1.7;
+  }
+
+  .jf-input::placeholder,
+  .jf-textarea::placeholder {
+    color: ${darkMode ? "rgba(255,255,255,0.28)" : "rgba(15,23,42,0.35)"};
+  }
+
+  .jf-input:focus,
+  .jf-textarea:focus,
+  .jf-textarea.listening {
+    border-color: rgba(20,184,166,0.55);
+    box-shadow: 0 0 0 4px rgba(20,184,166,0.12);
+  }
+
+  .jf-textarea-wrap {
+    position: relative;
+  }
+
+  .jf-mic-btn {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, #14b8a6, #0ea5e9);
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 14px 28px rgba(20,184,166,0.25);
+    transition: all 0.2s ease;
+  }
+
+  .jf-mic-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+  }
+
+  .jf-mic-btn.active {
+    background: linear-gradient(135deg, #f43f5e, #e11d48);
+    animation: jf-pulse 1.1s ease-in-out infinite;
+  }
+
+  @keyframes jf-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+
+  .jf-listening {
+    margin-top: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 9px;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #14b8a6;
+  }
+
+  .jf-listening span {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #14b8a6;
+    box-shadow: 0 0 10px rgba(20,184,166,0.7);
+  }
+
+  .jf-help {
+    margin-top: 8px;
+    font-size: 12px;
+  }
+
+  .jf-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 16px;
+    padding: 13px 16px;
+    font-size: 13px;
+    font-weight: 800;
+    border: 1px solid;
+  }
+
+  .jf-alert.success {
+    background: rgba(16,185,129,0.1);
+    border-color: rgba(16,185,129,0.25);
+    color: #34d399;
+  }
+
+  .jf-alert.error {
+    background: rgba(244,63,94,0.1);
+    border-color: rgba(244,63,94,0.25);
+    color: #fb7185;
+  }
+
+  .jf-submit-row {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  @media (min-width: 640px) {
+    .jf-submit-row {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+
+  .jf-note {
+    font-size: 12px;
+    line-height: 1.6;
+    max-width: 520px;
+  }
+
+  .jf-submit-btn {
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #14b8a6, #0ea5e9);
+    padding: 14px 26px;
+    color: white;
+    font-size: 14px;
+    font-weight: 900;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 16px 30px rgba(20,184,166,0.22);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .jf-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 38px rgba(20,184,166,0.3);
+  }
+
+  .jf-submit-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+`;
 
 export default JournalForm;

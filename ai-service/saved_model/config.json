@@ -1,7 +1,9 @@
 {
+  "project": "MindTuneX",
   "model_name": "MindTuneX Emotion Classifier",
-  "version": "v7_final_manual_enhanced",
+  "version": "final_production",
   "base_model": "distilbert-base-uncased",
+  "architecture": "DistilBERT + custom classification head",
   "num_labels": 12,
   "emotions": [
     "joy",
@@ -31,20 +33,61 @@
     "10": "surprise",
     "11": "neutral"
   },
-  "max_length": 128,
-  "confidence_threshold": 0.4,
-  "best_epoch": 8,
-  "test_results": {
-    "loss": 0.8979,
-    "accuracy": 0.802,
-    "f1_macro": 0.8303,
-    "f1_weighted": 0.8011
+  "emotion2id": {
+    "joy": 0,
+    "calm": 1,
+    "stress": 2,
+    "anxiety": 3,
+    "sadness": 4,
+    "anger": 5,
+    "fatigue": 6,
+    "love": 7,
+    "fear": 8,
+    "disgust": 9,
+    "surprise": 10,
+    "neutral": 11
   },
-  "features": [
-    "emotion_classification",
-    "sentiment",
-    "trigger_detection",
-    "keyword_explainability",
-    "rule_based_postprocessing"
-  ]
+  "emotion_polarity": {
+    "joy": 0.9,
+    "love": 0.85,
+    "calm": 0.7,
+    "surprise": 0.25,
+    "neutral": 0.0,
+    "fatigue": -0.4,
+    "anxiety": -0.65,
+    "stress": -0.7,
+    "fear": -0.75,
+    "anger": -0.75,
+    "disgust": -0.7,
+    "sadness": -0.8
+  },
+  "max_length": 128,
+  "confidence_threshold": 0.6,
+  "best_epoch": 4,
+  "selection_metric": "combined_score = validation_macro_f1 - 0.3 * validation_loss",
+  "training": {
+    "epochs_upper_limit": 6,
+    "learning_rate": 2e-05,
+    "weight_decay": 0.02,
+    "batch_size": 32,
+    "eval_batch_size": 64,
+    "dropout": 0.4,
+    "patience": 2,
+    "warmup_ratio": 0.1
+  },
+  "evaluation": {
+    "loss": 0.5521,
+    "accuracy": 0.7978,
+    "f1_macro": 0.8307,
+    "f1_weighted": 0.7969
+  },
+  "threshold_metadata": {
+    "chosen_threshold": 0.6,
+    "note": "threshold_config.json not found; using current CONFIDENCE_THRESHOLD"
+  },
+  "notes": {
+    "model_selection": "Best checkpoint selected using validation macro F1 penalized by validation loss.",
+    "deployment_usage": "Use tokenizer files + model_weights.pt + config.json to reload the classifier.",
+    "safety": "Low-confidence predictions should use fallback rules or request more context."
+  }
 }

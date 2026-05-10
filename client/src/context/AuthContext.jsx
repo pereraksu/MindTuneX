@@ -3,20 +3,24 @@ import { getMeApi, loginUserApi, registerUserApi } from "../api/authApi";
 
 const AuthContext = createContext(null);
 
-const extractUser = (responseData) => {
-  if (!responseData) return null;
-  return responseData.user || responseData.data?.user || responseData.data || responseData;
+const extractToken = (response) =>
+  response?.token || response?.data?.token || response?.data?.data?.token || null;
+
+const extractUser = (response) => {
+  if (!response) return null;
+  return (
+    response?.user ||
+    response?.data?.user ||
+    response?.data?.data?.user ||
+    response?.data ||
+    response ||
+    null
+  );
 };
 
 const isUserAdmin = (user) => {
-  if (!user) return false;
-
-  const role = user.role || user.user?.role;
-  if (typeof role === "string" && role.toLowerCase() === "admin") return true;
-
-  if (user.isAdmin === true || user.user?.isAdmin === true) return true;
-
-  return false;
+  const role = user?.role || user?.user?.role;
+  return role?.toLowerCase?.() === "admin" || user?.isAdmin === true || user?.user?.isAdmin === true;
 };
 
 export const AuthProvider = ({ children }) => {
@@ -32,8 +36,8 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      const responseData = await getMeApi();
-      const userData = extractUser(responseData);
+      const response = await getMeApi();
+      const userData = extractUser(response);
 
       if (!userData) {
         localStorage.removeItem("token");
@@ -56,33 +60,25 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const register = async (formData) => {
-    const responseData = await registerUserApi(formData);
+    const response = await registerUserApi(formData);
+    const token = extractToken(response);
+    const userData = extractUser(response);
 
-    if (responseData?.token) {
-      localStorage.setItem("token", responseData.token);
-    }
+    if (token) localStorage.setItem("token", token);
+    if (userData) setUser(userData);
 
-    const userData = extractUser(responseData);
-    if (userData) {
-      setUser(userData);
-    }
-
-    return responseData;
+    return response;
   };
 
   const login = async (formData) => {
-    const responseData = await loginUserApi(formData);
+    const response = await loginUserApi(formData);
+    const token = extractToken(response);
+    const userData = extractUser(response);
 
-    if (responseData?.token) {
-      localStorage.setItem("token", responseData.token);
-    }
+    if (token) localStorage.setItem("token", token);
+    if (userData) setUser(userData);
 
-    const userData = extractUser(responseData);
-    if (userData) {
-      setUser(userData);
-    }
-
-    return responseData;
+    return response;
   };
 
   const logout = () => {
@@ -98,7 +94,7 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       loadUser,
-      isAuthenticated: !!user,
+      isAuthenticated: Boolean(user),
       isAdmin: isUserAdmin(user),
     }),
     [user, loading]
@@ -106,9 +102,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading ? (
-        children
-      ) : (
+      {loading ? (
         <div className="flex min-h-screen items-center justify-center bg-slate-50 transition-colors duration-300 dark:bg-slate-950">
           <div className="flex flex-col items-center gap-4">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-100 border-t-sky-600 dark:border-slate-700 dark:border-t-sky-400" />
@@ -117,6 +111,8 @@ export const AuthProvider = ({ children }) => {
             </p>
           </div>
         </div>
+      ) : (
+        children
       )}
     </AuthContext.Provider>
   );

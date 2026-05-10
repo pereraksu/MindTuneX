@@ -2,13 +2,19 @@ const mongoose = require("mongoose");
 
 const reportSchema = new mongoose.Schema(
   {
+    // --------------------------------------------------
+    // User Reference
+    // --------------------------------------------------
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true, // 🔥 faster queries
+      index: true,
     },
 
+    // --------------------------------------------------
+    // Report Type
+    // --------------------------------------------------
     reportType: {
       type: String,
       enum: ["weekly", "monthly", "custom"],
@@ -17,6 +23,9 @@ const reportSchema = new mongoose.Schema(
       index: true,
     },
 
+    // --------------------------------------------------
+    // Report Title
+    // --------------------------------------------------
     title: {
       type: String,
       default: "Mood Report",
@@ -24,13 +33,18 @@ const reportSchema = new mongoose.Schema(
       maxlength: 150,
     },
 
+    // --------------------------------------------------
+    // PDF / File URL
+    // --------------------------------------------------
     fileUrl: {
       type: String,
       default: "",
       trim: true,
     },
 
-    // 🔥 Report period
+    // --------------------------------------------------
+    // Report Time Period
+    // --------------------------------------------------
     generatedForStart: {
       type: Date,
       default: null,
@@ -41,19 +55,92 @@ const reportSchema = new mongoose.Schema(
       default: null,
     },
 
-    // 🔥 NEW: snapshot data (VERY IMPORTANT for FYP)
+    // --------------------------------------------------
+    // Analytics Snapshot
+    // --------------------------------------------------
     summary: {
-      totalEntries: { type: Number, default: 0 },
-      avgSentiment: { type: Number, default: 0 },
-      topEmotion: { type: String, default: "neutral" },
+      totalEntries: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+
+      avgSentiment: {
+        type: Number,
+        default: 0,
+        min: -1,
+        max: 1,
+      },
+
+      avgSentimentLabel: {
+        type: String,
+        enum: ["positive", "negative", "neutral"],
+        default: "neutral",
+        lowercase: true,
+      },
+
+      topEmotion: {
+        type: String,
+        default: "neutral",
+        lowercase: true,
+      },
+
+      positiveCount: {
+        type: Number,
+        default: 0,
+      },
+
+      negativeCount: {
+        type: Number,
+        default: 0,
+      },
+
+      neutralCount: {
+        type: Number,
+        default: 0,
+      },
+
+      highRiskCount: {
+        type: Number,
+        default: 0,
+      },
+
+      trend: {
+        type: String,
+        enum: ["improving", "declining", "stable"],
+        default: "stable",
+      },
+
+      summaryText: {
+        type: String,
+        default: "",
+        maxlength: 1200,
+      },
     },
 
-    // 🔥 NEW: status tracking
+    // --------------------------------------------------
+    // Report Generation Status
+    // --------------------------------------------------
     status: {
       type: String,
       enum: ["pending", "generated", "failed"],
       default: "generated",
       lowercase: true,
+      index: true,
+    },
+
+    // --------------------------------------------------
+    // Metadata
+    // --------------------------------------------------
+    generatedBy: {
+      type: String,
+      default: "MindTuneX AI Engine",
+      trim: true,
+    },
+
+    version: {
+      type: String,
+      default: "v1.0",
     },
   },
   {
@@ -61,8 +148,30 @@ const reportSchema = new mongoose.Schema(
   }
 );
 
-// 🔥 Useful indexes
+// --------------------------------------------------
+// Indexes
+// --------------------------------------------------
 reportSchema.index({ user: 1, createdAt: -1 });
-reportSchema.index({ user: 1, reportType: 1 });
+
+reportSchema.index({
+  user: 1,
+  reportType: 1,
+  createdAt: -1,
+});
+
+reportSchema.index({
+  status: 1,
+  createdAt: -1,
+});
+
+// --------------------------------------------------
+// Clean JSON Response
+// --------------------------------------------------
+reportSchema.set("toJSON", {
+  transform: (_, ret) => {
+    delete ret.__v;
+    return ret;
+  },
+});
 
 module.exports = mongoose.model("Report", reportSchema);

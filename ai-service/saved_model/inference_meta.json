@@ -1,183 +1,135 @@
 {
-  "neutral_patterns": [
-    "nothing special",
-    "nothing much",
-    "just normal",
-    "ordinary day",
-    "feel okay",
-    "normal day",
-    "i am fine",
-    "just another day",
-    "i feel nothing",
-    "nothing at all",
-    "no strong feelings",
-    "i feel neutral",
-    "same as always",
-    "just the usual",
-    "nothing unusual"
-  ],
-  "explanation_keywords": {
-    "joy": [
-      "happy",
-      "amazing",
-      "great",
-      "excited",
-      "overjoyed",
-      "wonderful",
-      "glad",
-      "joyful",
-      "thrilled",
-      "fantastic"
-    ],
-    "calm": [
-      "peaceful",
-      "calm",
-      "relaxed",
-      "meditation",
-      "serene",
-      "ease",
-      "settled",
-      "grounded",
-      "tranquil"
-    ],
-    "stress": [
-      "deadline",
-      "pressure",
-      "overwhelmed",
-      "stressed",
-      "burden",
-      "responsibilities",
-      "urgent",
-      "too much"
-    ],
-    "anxiety": [
-      "nervous",
-      "worried",
-      "anxious",
-      "uneasy",
-      "interview",
-      "presentation",
-      "exam",
-      "restless",
-      "test",
-      "tomorrow"
-    ],
-    "sadness": [
-      "heartbroken",
-      "crying",
-      "sad",
-      "grief",
-      "lonely",
-      "depressed",
-      "down"
-    ],
-    "anger": [
-      "furious",
-      "angry",
-      "annoyed",
-      "irritated",
-      "mad",
-      "frustrated"
-    ],
-    "fatigue": [
-      "drained",
-      "exhausted",
-      "tired",
-      "sleepy",
-      "worn out",
-      "no energy",
-      "fatigued"
-    ],
-    "love": [
-      "love",
-      "adore",
-      "cherish",
-      "family",
-      "care",
-      "affection"
-    ],
-    "fear": [
-      "terrified",
-      "afraid",
-      "scared",
-      "fear",
-      "frightened",
-      "creepy"
-    ],
-    "disgust": [
-      "disgusting",
-      "gross",
-      "revolting",
-      "disgust",
-      "awful"
-    ],
-    "surprise": [
-      "shocked",
-      "surprised",
-      "unexpected",
-      "amazed",
-      "astonished"
-    ],
-    "neutral": [
-      "okay",
-      "normal",
-      "ordinary",
-      "fine",
-      "regular",
-      "standard"
-    ]
-  },
-  "trigger_categories": {
+  "confidence_threshold": 0.6,
+  "neutral_fallback_enabled": true,
+  "triggers": {
     "work_study": [
       "exam",
       "deadline",
       "assignment",
-      "work",
-      "job",
-      "meeting",
-      "presentation",
-      "interview",
       "study",
-      "university",
-      "college",
       "test",
-      "results"
+      "project",
+      "presentation",
+      "submission",
+      "university",
+      "lecture",
+      "class",
+      "homework",
+      "marks",
+      "grade"
     ],
-    "family_relationship": [
+    "family_social": [
       "family",
       "mother",
       "father",
       "friend",
+      "friends",
+      "boyfriend",
+      "girlfriend",
+      "love",
       "relationship",
       "partner",
-      "wife",
-      "husband",
-      "love",
       "parents"
     ],
     "health_energy": [
       "tired",
+      "exhausted",
       "sleep",
+      "fatigue",
+      "drained",
       "sick",
       "headache",
-      "drained",
-      "exhausted",
-      "energy",
-      "fatigue",
-      "pain",
-      "sleepy"
+      "burnout",
+      "weak",
+      "restless"
     ],
-    "daily_life": [
-      "day",
-      "morning",
-      "night",
-      "home",
-      "routine",
-      "today",
-      "walk",
-      "meditation",
-      "food",
-      "music"
+    "finance": [
+      "money",
+      "salary",
+      "bill",
+      "payment",
+      "loan",
+      "debt",
+      "price",
+      "income",
+      "rent",
+      "fee"
+    ]
+  },
+  "neutral_patterns": [
+    "nothing special",
+    "just normal",
+    "ordinary day",
+    "i feel nothing",
+    "just the usual",
+    "normal day",
+    "same as usual",
+    "nothing much",
+    "not much happened"
+  ],
+  "emotion_keyword_overrides": {
+    "fatigue": [
+      "tired",
+      "exhausted",
+      "drained",
+      "burnout",
+      "worn out",
+      "fatigued"
+    ],
+    "stress": [
+      "stressed",
+      "pressure",
+      "pressured",
+      "overwhelmed",
+      "deadline"
+    ],
+    "anxiety": [
+      "anxious",
+      "worried",
+      "nervous",
+      "panic",
+      "uneasy"
+    ],
+    "joy": [
+      "happy",
+      "joyful",
+      "excited",
+      "glad",
+      "delighted"
+    ],
+    "love": [
+      "love",
+      "loved",
+      "adore",
+      "cherish"
+    ],
+    "sadness": [
+      "sad",
+      "unhappy",
+      "cry",
+      "crying",
+      "depressed",
+      "miserable"
+    ],
+    "anger": [
+      "angry",
+      "furious",
+      "mad",
+      "annoyed",
+      "irritated"
+    ],
+    "fear": [
+      "afraid",
+      "scared",
+      "fearful",
+      "terrified",
+      "frightened"
+    ],
+    "calm": [
+      "calm",
+      "peaceful",
+      "relaxed",
+      "serene"
     ]
   },
   "emotion_polarity": {

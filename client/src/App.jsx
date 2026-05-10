@@ -1,29 +1,33 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import Home from "./pages/Home";
 
-// --- Public Pages ---
+// Public Pages
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 
-// --- User Pages ---
+// User Pages
 import DashboardPage from "./pages/DashboardPage";
 import JournalPage from "./pages/JournalPage";
 import SupportPage from "./pages/SupportPage";
 import MoodAnalysis from "./pages/MoodAnalysis";
 import ReportsPage from "./pages/ReportsPage";
+import ChatbotPage from "./pages/ChatbotPage";
 
-// --- Admin Pages ---
+// Admin Pages
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ManageUsersPage from "./pages/ManageUsersPage";
 import RiskAlertsPage from "./pages/RiskAlertsPage";
 import SystemReportsPage from "./pages/SystemReportsPage";
 
-// --- User Feature Pages / Components ---
+// User Feature Pages
 import MoodHistory from "./components/mood/MoodHistory";
 import WeeklyInsightCard from "./components/mood/WeeklyInsightCard";
 
-// --- Routes & Context ---
+// Route Guards
 import ProtectRoute from "./routes/ProtectRoute";
 import AdminRoute from "./routes/AdminRoute";
+
+// Context
 import { useAuth } from "./context/AuthContext";
 
 function App() {
@@ -42,23 +46,18 @@ function App() {
     );
   }
 
-  const homeRedirect = isAuthenticated
-    ? isAdmin
-      ? "/admin/dashboard"
-      : "/dashboard"
-    : "/login";
+  const dashboardRedirect = isAdmin ? "/admin/dashboard" : "/dashboard";
 
   return (
     <Routes>
-      {/* Root */}
-      <Route path="/" element={<Navigate to={homeRedirect} replace />} />
-
       {/* Public Routes */}
+      <Route path="/" element={<Home />} />
+
       <Route
         path="/login"
         element={
           isAuthenticated ? (
-            <Navigate to={homeRedirect} replace />
+            <Navigate to={dashboardRedirect} replace />
           ) : (
             <LoginPage />
           )
@@ -69,7 +68,7 @@ function App() {
         path="/register"
         element={
           isAuthenticated ? (
-            <Navigate to={homeRedirect} replace />
+            <Navigate to={dashboardRedirect} replace />
           ) : (
             <RegisterPage />
           )
@@ -140,6 +139,15 @@ function App() {
         }
       />
 
+      <Route
+        path="/chatbot"
+        element={
+          <ProtectRoute>
+            <ChatbotPage />
+          </ProtectRoute>
+        }
+      />
+
       {/* Admin Routes */}
       <Route
         path="/admin/dashboard"
@@ -177,11 +185,11 @@ function App() {
         }
       />
 
-      {/* Short redirect */}
+      {/* Redirects */}
       <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
       {/* Fallback */}
-      <Route path="*" element={<Navigate to={homeRedirect} replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

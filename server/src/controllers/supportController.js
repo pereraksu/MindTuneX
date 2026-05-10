@@ -1,9 +1,11 @@
 const axios = require("axios");
 const SupportLog = require("../models/SupportLog");
 
-// --------------------------------------------------
-// Emotion Recommendation Map
-// --------------------------------------------------
+const VALID_EMOTIONS = [
+  "joy", "calm", "stress", "anxiety", "sadness", "anger",
+  "fatigue", "love", "fear", "disgust", "surprise", "neutral",
+];
+
 const recommendationMap = {
   joy: ["Keep a gratitude journal today.", "Listen to uplifting music.", "Share your positive energy with a friend."],
   calm: ["Continue your mindfulness routine.", "Take a peaceful walk outdoors.", "Maintain your balanced daily routine."],
@@ -19,9 +21,6 @@ const recommendationMap = {
   neutral: ["Do a short reflection entry.", "Check in with yourself later today.", "Maintain your regular healthy routine."],
 };
 
-// --------------------------------------------------
-// Emotion Support Messages
-// --------------------------------------------------
 const supportMap = {
   joy: "You seem to be feeling positive. This is a good time to maintain your momentum.",
   calm: "You seem emotionally balanced right now. Try to maintain this peaceful state.",
@@ -37,82 +36,88 @@ const supportMap = {
   neutral: "You seem emotionally steady. This could be a good time for reflection.",
 };
 
-// --------------------------------------------------
-// YouTube Playlist Fetcher (SAFE VERSION)
-// --------------------------------------------------
+const emotionQueryMap = {
+  joy: "happy chill music playlist",
+  calm: "relaxing meditation music playlist",
+  stress: "stress relief calming music playlist",
+  anxiety: "anxiety relief calming music playlist",
+  sadness: "comfort piano instrumental playlist",
+  anger: "calming nature sounds playlist",
+  fatigue: "focus energy music playlist",
+  love: "romantic acoustic music playlist",
+  fear: "grounding meditation playlist",
+  disgust: "positive energy music playlist",
+  surprise: "focus study music playlist",
+  neutral: "lofi chill beats playlist",
+};
+
+const normalizeEmotion = (emotion) => {
+  const cleaned = String(emotion || "neutral").trim().toLowerCase();
+  return VALID_EMOTIONS.includes(cleaned) ? cleaned : "neutral";
+};
+
 const fetchYouTubePlaylists = async (emotion) => {
   try {
-    // ⚠️ API key check
     if (!process.env.YOUTUBE_API_KEY) {
-      console.warn("⚠️ Missing YouTube API Key");
+      console.warn("Missing YOUTUBE_API_KEY. Returning empty playlist list.");
       return [];
     }
 
-    const emotionQueryMap = {
-      joy: "happy chill music playlist",
-      calm: "relaxing meditation music playlist",
-      stress: "stress relief calming music playlist",
-      anxiety: "anxiety relief binaural beats playlist",
-      sadness: "comfort piano instrumental playlist",
-      anger: "calming nature sounds playlist",
-      fatigue: "focus energy music playlist",
-      love: "romantic acoustic music playlist",
-      fear: "grounding meditation playlist",
-      disgust: "positive energy music playlist",
-      surprise: "focus study music playlist",
-      neutral: "lofi chill beats playlist",
-    };
-
-    const searchQuery = emotionQueryMap[emotion] || "relaxing music playlist";
-
     const response = await axios.get("https://www.googleapis.com/youtube/v3/search", {
+      timeout: 7000,
       params: {
         part: "snippet",
-        q: searchQuery,
+        q: emotionQueryMap[emotion] || emotionQueryMap.neutral,
         type: "playlist",
         maxResults: 4,
         key: process.env.YOUTUBE_API_KEY,
       },
     });
 
-    return response.data.items.map((item) => ({
-      id: item.id.playlistId,
-      title: item.snippet.title,
-      thumbnail: item.snippet.thumbnails?.high?.url,
-      url: `https://www.youtube.com/playlist?list=${item.id.playlistId}`,
-    }));
+    const items = Array.isArray(response.data?.items) ? response.data.items : [];
+
+    return items
+      .filter((item) => item?.id?.playlistId && item?.snippet?.title)
+      .map((item) => ({
+        id: item.id.playlistId,
+        title: item.snippet.title,
+        thumbnail:
+          item.snippet.thumbnails?.high?.url ||
+          item.snippet.thumbnails?.medium?.url ||
+          item.snippet.thumbnails?.default?.url ||
+          "",
+        url: `https://www.youtube.com/playlist?list=${item.id.playlistId}`,
+      }));
   } catch (error) {
     console.error("YouTube API Error:", error.message);
     return [];
   }
 };
 
-// --------------------------------------------------
-// MAIN CONTROLLER
-// --------------------------------------------------
 const getSupportResponse = async (req, res) => {
   try {
-    const { emotion, moodEntryId } = req.body;
+    const detectedEmotion = normalizeEmotion(req.body.emotion);
+    const moodEntryId = req.body.moodEntryId || null;
 
-    const detectedEmotion = emotion ? emotion.toLowerCase() : "neutral";
-
-    const supportResponse =
-      supportMap[detectedEmotion] || supportMap.neutral;
-
+    const supportResponse = supportMap[detectedEmotion] || supportMap.neutral;
     const recommendations =
       recommendationMap[detectedEmotion] || recommendationMap.neutral;
 
-    // 🎵 Fetch playlists safely
     const youtubePlaylists = await fetchYouTubePlaylists(detectedEmotion);
 
-    // 🧠 Save log
-    const log = await SupportLog.create({
-      user: req.user._id,
-      moodEntry: moodEntryId || null,
-      detectedEmotion,
-      supportResponse,
-      recommendations,
-    });
+    let log = null;
+
+    try {
+      log = await SupportLog.create({
+        user: req.user._id,
+        moodEntry: moodEntryId,
+        detectedEmotion,
+        supportResponse,
+        recommendations,
+      });
+    } catch (logError) {
+      console.error("SupportLog save failed:", logError.message);
+    }
 
     return res.status(200).json({
       success: true,

@@ -1,9 +1,82 @@
 @import "tailwindcss";
 @variant dark (&:where(.dark, .dark *));
 
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.dark body {
+  background: #050810;
+  color: #f8fafc;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgba(20, 184, 166, 0.25);
+  color: inherit;
+}
+
+/* Premium scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.55);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Recharts fix */
 .recharts-responsive-container {
   min-height: 300px !important;
   min-width: 100px !important;
+}
+
+/* Recharts text theme */
+.recharts-text {
+  fill: #64748b;
+}
+
+.dark .recharts-text {
+  fill: rgba(255, 255, 255, 0.45);
 }
 
 /* ========================================
@@ -50,12 +123,37 @@
   fill: #f43f5e;
 }
 
-.react-calendar-heatmap .color-sad {
+.react-calendar-heatmap .color-sad,
+.react-calendar-heatmap .color-sadness {
   fill: #6366f1;
 }
 
 .react-calendar-heatmap .color-anger {
   fill: #ea580c;
+}
+
+.react-calendar-heatmap .color-anxiety {
+  fill: #f97316;
+}
+
+.react-calendar-heatmap .color-love {
+  fill: #ec4899;
+}
+
+.react-calendar-heatmap .color-fear {
+  fill: #8b5cf6;
+}
+
+.react-calendar-heatmap .color-fatigue {
+  fill: #64748b;
+}
+
+.react-calendar-heatmap .color-surprise {
+  fill: #06b6d4;
+}
+
+.react-calendar-heatmap .color-disgust {
+  fill: #22c55e;
 }
 
 /* Cell style */

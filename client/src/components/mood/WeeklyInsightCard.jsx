@@ -2,293 +2,708 @@ import React, { useState, useEffect } from "react";
 import Navbar from "../common/Navbar";
 import Sidebar from "../common/Sidebar";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/useTheme";
 import { getMyMoodsApi } from "../../api/moodApi";
 
 const EMOTION_EMOJI = {
-  joy: "😄",
-  calm: "😌",
-  stress: "😤",
-  anxiety: "😰",
-  sadness: "😢",
-  anger: "😡",
-  fatigue: "😴",
-  love: "🥰",
-  fear: "😨",
-  disgust: "🤢",
-  surprise: "😲",
-  neutral: "😐",
+  joy: "😄", calm: "😌", stress: "😤", anxiety: "😰",
+  sadness: "😢", anger: "😡", fatigue: "😴", love: "🥰",
+  fear: "😨", disgust: "🤢", surprise: "😲", neutral: "😐",
 };
 
-const EMOTION_COLORS = {
-  stress:
-    "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800/50",
-  anxiety:
-    "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800/50",
-  calm:
-    "bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-800/50",
-  joy:
-    "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800/50",
-  fatigue:
-    "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
-  sadness:
-    "bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:border-violet-800/50",
-  anger:
-    "bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-400 dark:border-pink-800/50",
-  love:
-    "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800/50",
-  fear:
-    "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800/50",
-  neutral:
-    "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800/50",
-  surprise:
-    "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-800/50",
-  disgust:
-    "bg-lime-100 text-lime-700 border-lime-200 dark:bg-lime-900/30 dark:text-lime-400 dark:border-lime-800/50",
+const EMOTION_ACCENT = {
+  joy: { from: "#f59e0b", to: "#f97316", text: "#fbbf24" },
+  calm: { from: "#14b8a6", to: "#0ea5e9", text: "#2dd4bf" },
+  stress: { from: "#f43f5e", to: "#e11d48", text: "#fb7185" },
+  anxiety: { from: "#f97316", to: "#f59e0b", text: "#fb923c" },
+  sadness: { from: "#8b5cf6", to: "#6366f1", text: "#a78bfa" },
+  anger: { from: "#ef4444", to: "#f43f5e", text: "#f87171" },
+  fatigue: { from: "#64748b", to: "#475569", text: "#94a3b8" },
+  love: { from: "#ec4899", to: "#f43f5e", text: "#f472b6" },
+  fear: { from: "#818cf8", to: "#8b5cf6", text: "#a5b4fc" },
+  disgust: { from: "#4ade80", to: "#22c55e", text: "#86efac" },
+  surprise: { from: "#14b8a6", to: "#06b6d4", text: "#5eead4" },
+  neutral: { from: "#64748b", to: "#475569", text: "#94a3b8" },
 };
 
-const SENTIMENT_COLORS = {
-  positive: "text-emerald-600 dark:text-emerald-400",
-  negative: "text-rose-600 dark:text-rose-400",
-  neutral: "text-slate-500 dark:text-slate-400",
+const SENTIMENT_COLOR = {
+  positive: "#34d399",
+  negative: "#fb7185",
+  neutral: "#94a3b8",
 };
 
 const WeeklyInsights = () => {
   const { user, logout, isAdmin } = useAuth();
+  const { darkMode } = useTheme();
 
   const [insight, setInsight] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchAndCalculateInsights = async () => {
-      try {
-        setLoading(true);
+  const fetchInsights = async () => {
+    try {
+      setLoading(true);
 
-        const response = await getMyMoodsApi();
-        const allMoods = Array.isArray(response)
-          ? response
-          : Array.isArray(response?.data?.data)
-          ? response.data.data
-          : Array.isArray(response?.data)
-          ? response.data
-          : [];
+      const response = await getMyMoodsApi();
 
-        if (allMoods.length === 0) {
-          setInsight(null);
-          return;
-        }
+      const allMoods = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data?.data)
+        ? response.data.data
+        : Array.isArray(response?.data)
+        ? response.data
+        : [];
 
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-        const recentMoods = allMoods.filter(
-          (m) => m.createdAt && new Date(m.createdAt) >= sevenDaysAgo
-        );
-
-        if (recentMoods.length === 0) {
-          setInsight(null);
-          return;
-        }
-
-        const emotionCounts = {};
-        let posCount = 0;
-        let negCount = 0;
-
-        recentMoods.forEach((m) => {
-          const emo = m.predictedEmotion?.toLowerCase() || "neutral";
-          emotionCounts[emo] = (emotionCounts[emo] || 0) + 1;
-
-          if (m.sentimentLabel === "positive") posCount++;
-          if (m.sentimentLabel === "negative") negCount++;
-        });
-
-        let topEmotion = "neutral";
-        let maxCount = 0;
-
-        for (const [emo, count] of Object.entries(emotionCounts)) {
-          if (count > maxCount) {
-            maxCount = count;
-            topEmotion = emo;
-          }
-        }
-
-        let avgSentiment = "Neutral";
-        if (posCount > negCount) avgSentiment = "Positive";
-        else if (negCount > posCount) avgSentiment = "Negative";
-
-        const summaryText = `Over the past week, you've checked in ${recentMoods.length} times. Your most common emotional state has been ${topEmotion}, contributing to a generally ${avgSentiment.toLowerCase()} emotional trend. Keep tracking your moods consistently to strengthen self-awareness and emotional balance.`;
-
-        setInsight({
-          totalEntries: recentMoods.length,
-          avgSentiment,
-          topEmotion,
-          emotionCounts,
-          summaryText,
-        });
-      } catch (err) {
-        console.error("Failed to load insights:", err);
+      if (!allMoods.length) {
         setInsight(null);
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
 
-    fetchAndCalculateInsights();
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const recentMoods = allMoods.filter(
+        (m) => m.createdAt && new Date(m.createdAt) >= sevenDaysAgo
+      );
+
+      if (!recentMoods.length) {
+        setInsight(null);
+        return;
+      }
+
+      const emotionCounts = {};
+      let posCount = 0;
+      let negCount = 0;
+
+      recentMoods.forEach((m) => {
+        const emotion = m.predictedEmotion?.toLowerCase() || "neutral";
+        const sentiment = m.sentimentLabel?.toLowerCase() || "neutral";
+
+        emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
+
+        if (sentiment === "positive") posCount += 1;
+        if (sentiment === "negative") negCount += 1;
+      });
+
+      let topEmotion = "neutral";
+      let maxCount = 0;
+
+      Object.entries(emotionCounts).forEach(([emotion, count]) => {
+        if (count > maxCount) {
+          maxCount = count;
+          topEmotion = emotion;
+        }
+      });
+
+      const avgSentiment =
+        posCount > negCount ? "Positive" : negCount > posCount ? "Negative" : "Neutral";
+
+      setInsight({
+        totalEntries: recentMoods.length,
+        avgSentiment,
+        topEmotion,
+        emotionCounts,
+        summaryText: `Over the past week, you checked in ${recentMoods.length} time${
+          recentMoods.length !== 1 ? "s" : ""
+        }. Your most common emotional state was ${topEmotion}, contributing to a generally ${avgSentiment.toLowerCase()} emotional trend. Keep tracking your moods consistently to strengthen self-awareness and emotional balance.`,
+      });
+    } catch {
+      setInsight(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInsights();
   }, []);
 
+  const sorted = Object.entries(insight?.emotionCounts || {}).sort(
+    (a, b) => b[1] - a[1]
+  );
+
+  const maxVal = sorted[0]?.[1] || 1;
+
   return (
-    <div className="relative flex min-h-screen bg-gradient-to-br from-slate-50 via-sky-50 to-cyan-50 transition-colors duration-500 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
-      <div className="pointer-events-none absolute inset-0 opacity-30 dark:opacity-20 bg-[radial-gradient(circle_at_top_left,rgba(45,212,191,0.18),transparent_25%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.16),transparent_25%),radial-gradient(circle_at_bottom,rgba(99,102,241,0.10),transparent_30%)]" />
+    <>
+      <style>{STYLES(darkMode)}</style>
 
-      <Sidebar />
+      <div className="wi-root">
+        <div className="wi-glow wi-glow-1" />
+        <div className="wi-glow wi-glow-2" />
 
-      <div className="relative flex flex-1 flex-col">
-        <Navbar user={user} onLogout={logout} isAdmin={isAdmin} />
+        <Sidebar />
 
-        <main className="flex-1 overflow-y-auto p-6 lg:p-10">
-          <div className="mx-auto max-w-5xl space-y-8">
-            {/* Hero */}
-            <div className="relative overflow-hidden rounded-[2rem] border border-white/60 bg-white/75 p-6 shadow-2xl shadow-sky-100/40 backdrop-blur-xl animate-in fade-in slide-in-from-left-4 duration-700 dark:border-slate-700 dark:bg-slate-900/70 dark:shadow-none lg:p-8">
-              <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-teal-500 via-sky-500 to-cyan-500" />
-              <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-sky-100/50 blur-3xl dark:bg-sky-900/20" />
+        <div className="wi-body">
+          <Navbar user={user} onLogout={logout} isAdmin={isAdmin} />
 
-              <div className="relative">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
-                  7 Day Emotional Analytics
-                </p>
-                <h1 className="mt-2 font-serif text-4xl font-semibold tracking-tight text-slate-800 dark:text-white">
-                  Weekly{" "}
-                  <span className="bg-gradient-to-r from-teal-500 to-sky-600 bg-clip-text text-transparent dark:from-teal-400 dark:to-sky-400">
-                    Insights
-                  </span>
+          <main className="wi-main">
+            <div className="wi-container">
+              <div className="wi-hero">
+                <div className="wi-hero-bar" />
+
+                <p className="wi-eyebrow">7 Day Emotional Analytics</p>
+
+                <h1 className="wi-title">
+                  Weekly <span>Insights</span>
                 </h1>
-                <p className="mt-2 text-slate-500 dark:text-slate-400">
+
+                <p className="wi-hero-sub">
                   Your emotional landscape, dominant mood patterns, and weekly wellbeing summary.
                 </p>
               </div>
-            </div>
 
-            {loading ? (
-              <div className="flex h-64 items-center justify-center">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-100 border-t-teal-500 dark:border-slate-700 dark:border-t-teal-400" />
-              </div>
-            ) : !insight ? (
-              <div className="flex flex-col items-center justify-center rounded-[2rem] border border-dashed border-slate-200 bg-white/70 py-20 text-center shadow-xl backdrop-blur-xl animate-in fade-in duration-700 dark:border-slate-700 dark:bg-slate-800/40 dark:shadow-none">
-                <span className="mb-4 text-6xl opacity-80">📊</span>
-                <h3 className="text-xl font-medium text-slate-700 dark:text-slate-200">
-                  Not enough data for this week
-                </h3>
-                <p className="mt-2 max-w-xs text-slate-400 dark:text-slate-500">
-                  Keep logging your moods daily to unlock weekly trends and emotional insights.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                {/* Top Stats */}
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                  <StatCard
-                    label="Total Entries"
-                    value={insight.totalEntries}
-                    subtitle="this week"
-                  />
-
-                  <StatCard
-                    label="Average Sentiment"
-                    value={insight.avgSentiment || "Neutral"}
-                    subtitle="overall weekly tone"
-                    valueClassName={
-                      SENTIMENT_COLORS[insight.avgSentiment?.toLowerCase()] ||
-                      "text-slate-700 dark:text-slate-300"
-                    }
-                  />
-
-                  <div className="rounded-[1.75rem] border border-white/60 bg-white/75 p-6 shadow-xl shadow-sky-100/30 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl dark:border-slate-700 dark:bg-slate-900/70 dark:shadow-none">
-                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-                      Top Emotion
-                    </p>
-                    <div className="mt-4 flex items-center gap-3">
-                      <span className="text-5xl">
-                        {EMOTION_EMOJI[insight.topEmotion?.toLowerCase()] || "😐"}
-                      </span>
-                      <span className="text-3xl font-light capitalize text-slate-800 dark:text-white">
-                        {insight.topEmotion || "None"}
-                      </span>
-                    </div>
-                  </div>
+              {loading ? (
+                <div className="wi-center">
+                  <div className="wi-spinner" />
+                  <p className="wi-state-text">Analysing your week…</p>
                 </div>
+              ) : !insight ? (
+                <div className="wi-empty">
+                  <div className="wi-empty-icon">📊</div>
+                  <h3 className="wi-empty-title">Not enough data for this week</h3>
+                  <p className="wi-empty-sub">
+                    Keep logging your moods daily to unlock weekly trends and emotional insights.
+                  </p>
+                </div>
+              ) : (
+                <div className="wi-content">
+                  <div className="wi-stats-grid">
+                    <StatCard
+                      label="Total Entries"
+                      value={insight.totalEntries}
+                      sub="this week"
+                      from="#14b8a6"
+                      to="#0ea5e9"
+                      color="#2dd4bf"
+                    />
 
-                {/* Summary */}
-                {insight.summaryText && (
-                  <div className="relative rounded-[2rem] border border-white/60 bg-white/75 p-8 shadow-2xl shadow-sky-100/40 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/70 dark:shadow-none">
-                    <div className="absolute -left-1 -top-1 text-7xl opacity-10 dark:opacity-5 text-slate-800 dark:text-white">
-                      ❞
+                    <StatCard
+                      label="Average Sentiment"
+                      value={insight.avgSentiment}
+                      sub="overall weekly tone"
+                      from={
+                        insight.avgSentiment === "Positive"
+                          ? "#10b981"
+                          : insight.avgSentiment === "Negative"
+                          ? "#f43f5e"
+                          : "#64748b"
+                      }
+                      to={
+                        insight.avgSentiment === "Positive"
+                          ? "#14b8a6"
+                          : insight.avgSentiment === "Negative"
+                          ? "#f97316"
+                          : "#475569"
+                      }
+                      color={
+                        SENTIMENT_COLOR[insight.avgSentiment?.toLowerCase()] ||
+                        "#94a3b8"
+                      }
+                    />
+
+                    <TopEmotionCard emotion={insight.topEmotion} />
+                  </div>
+
+                  <div className="wi-summary-card">
+                    <div className="wi-summary-bar" />
+
+                    <div className="wi-summary-header">
+                      <span className="wi-summary-icon">ⓘ</span>
+                      <span className="wi-summary-eyebrow">Weekly Summary</span>
                     </div>
 
-                    <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.22em] text-teal-600 dark:text-teal-400">
-                      <span className="text-xl">✦</span> Weekly Summary
-                    </h3>
-
-                    <p className="text-[0.98rem] leading-relaxed text-slate-700 dark:text-slate-300">
-                      {insight.summaryText}
-                    </p>
+                    <p className="wi-summary-text">{insight.summaryText}</p>
                   </div>
-                )}
 
-                {/* Emotion Breakdown */}
-                <div className="rounded-[2rem] border border-white/60 bg-white/75 p-8 shadow-xl shadow-sky-100/30 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/70 dark:shadow-none">
-                  <h3 className="mb-5 text-sm font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
-                    Emotion Breakdown (Last 7 Days)
-                  </h3>
+                  <div className="wi-breakdown-card">
+                    <p className="wi-breakdown-eyebrow">
+                      Emotion Breakdown — Last 7 Days
+                    </p>
 
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {Object.entries(insight.emotionCounts || {})
-                      .sort((a, b) => b[1] - a[1])
-                      .map(([key, count]) => {
-                        const emoKey = key.toLowerCase();
-                        const emoji = EMOTION_EMOJI[emoKey] || "😐";
-                        const emoClass =
-                          EMOTION_COLORS[emoKey] ||
-                          "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300";
+                    <div className="wi-breakdown-list">
+                      {sorted.map(([key, count]) => {
+                        const emotion = key.toLowerCase();
+                        const accent =
+                          EMOTION_ACCENT[emotion] || EMOTION_ACCENT.neutral;
+                        const pct = Math.round((count / maxVal) * 100);
 
                         return (
-                          <div
-                            key={key}
-                            className={`flex items-center gap-3 rounded-[1.5rem] border px-4 py-3 shadow-sm transition hover:-translate-y-0.5 ${emoClass}`}
-                          >
-                            <span className="text-2xl">{emoji}</span>
-                            <div className="flex-1">
-                              <p className="font-medium capitalize">{key}</p>
+                          <div key={key} className="wi-emo-row">
+                            <div className="wi-emo-left">
+                              <div
+                                className="wi-emo-icon"
+                                style={{
+                                  background: `${accent.from}18`,
+                                  borderColor: `${accent.from}33`,
+                                }}
+                              >
+                                {EMOTION_EMOJI[emotion] || "😐"}
+                              </div>
+
+                              <span
+                                className="wi-emo-name"
+                                style={{ color: accent.text }}
+                              >
+                                {key}
+                              </span>
                             </div>
-                            <span className="rounded-3xl bg-white px-3 py-1 text-xs font-bold text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+
+                            <div className="wi-emo-bar-wrap">
+                              <div className="wi-emo-bar-track">
+                                <div
+                                  className="wi-emo-bar-fill"
+                                  style={{
+                                    width: `${pct}%`,
+                                    background: `linear-gradient(90deg, ${accent.from}, ${accent.to})`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+
+                            <span
+                              className="wi-emo-count"
+                              style={{ color: accent.text }}
+                            >
                               {count}
                             </span>
                           </div>
                         );
                       })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </main>
+              )}
+            </div>
+          </main>
+        </div>
       </div>
+    </>
+  );
+};
+
+const StatCard = ({ label, value, sub, from, to, color }) => (
+  <div className="wi-stat-card">
+    <div
+      className="wi-stat-bar"
+      style={{ background: `linear-gradient(90deg, ${from}, ${to})` }}
+    />
+    <p className="wi-stat-label">{label}</p>
+    <p className="wi-stat-val" style={{ color }}>
+      {value}
+    </p>
+    <p className="wi-stat-sub">{sub}</p>
+  </div>
+);
+
+const TopEmotionCard = ({ emotion }) => {
+  const key = emotion?.toLowerCase() || "neutral";
+  const accent = EMOTION_ACCENT[key] || EMOTION_ACCENT.neutral;
+
+  return (
+    <div className="wi-stat-card">
+      <div
+        className="wi-stat-bar"
+        style={{
+          background: `linear-gradient(90deg, ${accent.from}, ${accent.to})`,
+        }}
+      />
+
+      <p className="wi-stat-label">Top Emotion</p>
+
+      <div className="wi-top-emotion-row">
+        <div
+          className="wi-top-emoji-wrap"
+          style={{
+            background: `${accent.from}18`,
+            borderColor: `${accent.from}33`,
+          }}
+        >
+          {EMOTION_EMOJI[key] || "😐"}
+        </div>
+
+        <span className="wi-top-emotion-name" style={{ color: accent.text }}>
+          {emotion}
+        </span>
+      </div>
+
+      <p className="wi-stat-sub">most frequent emotion</p>
     </div>
   );
 };
 
-const StatCard = ({ label, value, subtitle, valueClassName = "text-slate-800 dark:text-white" }) => {
-  return (
-    <div className="rounded-[1.75rem] border border-white/60 bg-white/75 p-6 shadow-xl shadow-sky-100/30 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl dark:border-slate-700 dark:bg-slate-900/70 dark:shadow-none">
-      <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-        {label}
-      </p>
-      <p className={`mt-3 text-4xl font-light capitalize ${valueClassName}`}>
-        {value}
-      </p>
-      <p className="mt-2 text-sm text-slate-400 dark:text-slate-500">
-        {subtitle}
-      </p>
-    </div>
-  );
-};
+const STYLES = (darkMode) => `
+  .wi-root {
+    display: flex;
+    min-height: 100svh;
+    background: ${
+      darkMode
+        ? "radial-gradient(circle at top left, rgba(20,184,166,0.08), transparent 35%), #080c14"
+        : "linear-gradient(135deg, #f8fafc 0%, #eef9ff 100%)"
+    };
+    font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .wi-glow {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wi-glow-1 {
+    top: -100px;
+    left: -80px;
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, rgba(20,184,166,0.12) 0%, transparent 65%);
+  }
+
+  .wi-glow-2 {
+    bottom: -80px;
+    right: -80px;
+    width: 380px;
+    height: 380px;
+    background: radial-gradient(circle, rgba(14,165,233,0.1) 0%, transparent 65%);
+  }
+
+  .wi-body {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+    min-width: 0;
+  }
+
+  .wi-main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 24px;
+  }
+
+  @media(min-width: 1024px) {
+    .wi-main {
+      padding: 36px 40px;
+    }
+  }
+
+  .wi-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .wi-hero,
+  .wi-stat-card,
+  .wi-summary-card,
+  .wi-breakdown-card,
+  .wi-empty {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid ${darkMode ? "rgba(255,255,255,0.09)" : "rgba(15,23,42,0.08)"};
+    background: ${darkMode ? "rgba(15,23,42,0.72)" : "rgba(255,255,255,0.78)"};
+    backdrop-filter: blur(22px);
+    box-shadow: ${darkMode ? "0 22px 55px rgba(0,0,0,0.28)" : "0 22px 55px rgba(15,23,42,0.08)"};
+  }
+
+  .wi-hero {
+    padding: 28px;
+  }
+
+  .wi-hero-bar,
+  .wi-stat-bar,
+  .wi-summary-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    opacity: 0.95;
+  }
+
+  .wi-hero-bar {
+    background: linear-gradient(90deg, #14b8a6, #0ea5e9, #8b5cf6);
+  }
+
+  .wi-eyebrow {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: ${darkMode ? "rgba(255,255,255,0.34)" : "rgba(15,23,42,0.42)"};
+    margin-bottom: 8px;
+  }
+
+  .wi-title {
+    font-size: clamp(32px, 4vw, 46px);
+    font-weight: 900;
+    color: ${darkMode ? "rgba(255,255,255,0.95)" : "#0f172a"};
+    line-height: 1.05;
+    margin-bottom: 10px;
+  }
+
+  .wi-title span {
+    background: linear-gradient(135deg, #14b8a6, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .wi-hero-sub {
+    font-size: 13.5px;
+    color: ${darkMode ? "rgba(255,255,255,0.42)" : "rgba(15,23,42,0.52)"};
+    line-height: 1.6;
+  }
+
+  .wi-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    gap: 14px;
+  }
+
+  .wi-spinner {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 3px solid ${darkMode ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)"};
+    border-top-color: #14b8a6;
+    animation: wi-spin 0.75s linear infinite;
+  }
+
+  @keyframes wi-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .wi-state-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: ${darkMode ? "rgba(255,255,255,0.38)" : "rgba(15,23,42,0.48)"};
+  }
+
+  .wi-empty {
+    padding: 64px 24px;
+    text-align: center;
+  }
+
+  .wi-empty-icon {
+    width: 66px;
+    height: 66px;
+    border-radius: 20px;
+    margin: 0 auto 16px;
+    background: ${darkMode ? "rgba(255,255,255,0.055)" : "rgba(15,23,42,0.055)"};
+    border: 1px solid ${darkMode ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)"};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+  }
+
+  .wi-empty-title {
+    font-size: 18px;
+    font-weight: 900;
+    color: ${darkMode ? "rgba(255,255,255,0.74)" : "#0f172a"};
+    margin-bottom: 7px;
+  }
+
+  .wi-empty-sub {
+    font-size: 13px;
+    color: ${darkMode ? "rgba(255,255,255,0.36)" : "rgba(15,23,42,0.48)"};
+    line-height: 1.6;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .wi-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .wi-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+
+  @media(max-width: 720px) {
+    .wi-stats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .wi-stat-card {
+    padding: 22px 24px;
+    transition: all 0.22s ease;
+  }
+
+  .wi-stat-card:hover,
+  .wi-summary-card:hover,
+  .wi-breakdown-card:hover {
+    transform: translateY(-3px);
+    border-color: ${darkMode ? "rgba(255,255,255,0.15)" : "rgba(14,165,233,0.18)"};
+  }
+
+  .wi-stat-label {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: ${darkMode ? "rgba(255,255,255,0.34)" : "rgba(15,23,42,0.42)"};
+    margin-bottom: 13px;
+    margin-top: 4px;
+  }
+
+  .wi-stat-val {
+    font-size: 36px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    text-transform: capitalize;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .wi-stat-sub {
+    font-size: 12px;
+    font-weight: 700;
+    color: ${darkMode ? "rgba(255,255,255,0.36)" : "rgba(15,23,42,0.48)"};
+  }
+
+  .wi-top-emotion-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .wi-top-emoji-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    border: 1px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+
+  .wi-top-emotion-name {
+    font-size: 25px;
+    font-weight: 900;
+    text-transform: capitalize;
+  }
+
+  .wi-summary-card,
+  .wi-breakdown-card {
+    padding: 24px;
+    transition: all 0.22s ease;
+  }
+
+  .wi-summary-bar {
+    background: linear-gradient(90deg, #14b8a6, #0ea5e9);
+  }
+
+  .wi-summary-header {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 13px;
+  }
+
+  .wi-summary-icon {
+    color: #14b8a6;
+    font-weight: 900;
+  }
+
+  .wi-summary-eyebrow,
+  .wi-breakdown-eyebrow {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #14b8a6;
+  }
+
+  .wi-summary-text {
+    font-size: 14px;
+    line-height: 1.75;
+    color: ${darkMode ? "rgba(255,255,255,0.56)" : "rgba(15,23,42,0.62)"};
+  }
+
+  .wi-breakdown-eyebrow {
+    color: ${darkMode ? "rgba(255,255,255,0.34)" : "rgba(15,23,42,0.42)"};
+    margin-bottom: 18px;
+  }
+
+  .wi-breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .wi-emo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .wi-emo-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 140px;
+    flex-shrink: 0;
+  }
+
+  .wi-emo-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 13px;
+    border: 1px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  .wi-emo-name {
+    font-size: 13px;
+    font-weight: 900;
+    text-transform: capitalize;
+  }
+
+  .wi-emo-bar-wrap {
+    flex: 1;
+  }
+
+  .wi-emo-bar-track {
+    height: 7px;
+    width: 100%;
+    border-radius: 999px;
+    background: ${darkMode ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)"};
+    overflow: hidden;
+  }
+
+  .wi-emo-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.7s ease;
+  }
+
+  .wi-emo-count {
+    font-size: 12px;
+    font-weight: 900;
+    font-family: monospace;
+    min-width: 24px;
+    text-align: right;
+  }
+`;
 
 export default WeeklyInsights;

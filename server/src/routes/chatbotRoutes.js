@@ -1,39 +1,40 @@
 const express = require("express");
 
-const {
-  registerUser,
-  loginUser,
-  getMe,
-} = require("../controllers/authController");
-
 const { protect } = require("../middleware/authMiddleware");
+
+const {
+  sendChatMessage,
+  getChatHistory,
+} = require("../controllers/chatbotController");
 
 const router = express.Router();
 
 // --------------------------------------------------
-// Public Authentication Routes
+// Protected Chatbot Routes
 // --------------------------------------------------
-
-// 📝 Register New User
-router.post("/register", registerUser);
-
-// 🔑 Login Existing User
-router.post("/login", loginUser);
+router.use(protect);
 
 // --------------------------------------------------
-// Protected Routes
+// Chat History
 // --------------------------------------------------
 
-// 👤 Get Current Logged User
-router.get("/me", protect, getMe);
+// 📜 Get all chat messages for logged user
+router.get("/", getChatHistory);
 
 // --------------------------------------------------
-// Auth Health Check
+// Send Message to AI Chatbot
+// --------------------------------------------------
+
+// 🤖 Send user message + receive AI response
+router.post("/message", sendChatMessage);
+
+// --------------------------------------------------
+// Health Check
 // --------------------------------------------------
 router.get("/health", (req, res) => {
   return res.status(200).json({
     success: true,
-    message: "Authentication service is running",
+    message: "Chatbot service is running",
     timestamp: new Date(),
   });
 });

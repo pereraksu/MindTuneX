@@ -1,5 +1,12 @@
 const MoodEntry = require("../models/MoodEntry");
 
+const getSentimentScore = (label) => {
+  const value = String(label || "neutral").toLowerCase();
+  if (value === "positive") return 1;
+  if (value === "negative") return -1;
+  return 0;
+};
+
 const getWeeklyInsights = async (req, res) => {
   try {
     const last7Days = new Date();
@@ -11,99 +18,109 @@ const getWeeklyInsights = async (req, res) => {
     }).sort({ createdAt: 1 });
 
     if (!moods.length) {
-      return res.json({
+      return res.status(200).json({
         success: true,
-        data: null,
         message: "No weekly insights available",
+        data: null,
       });
     }
 
-    // ---------------------------
-    // 1. Emotion Counts
-    // ---------------------------
     const emotionCounts = {};
-    let totalSentimentScore = 0;
     let positiveCount = 0;
     let negativeCount = 0;
+    let neutralCount = 0;
+    let totalScore = 0;
 
-    moods.forEach((m) => {
-      const emo = m.predictedEmotion || "neutral";
+    moods.forEach((mood) => {
+      const emotion = String(mood.predictedEmotion || "neutral")
+        .toLowerCase()
+        .trim();
 
-      emotionCounts[emo] = (emotionCounts[emo] || 0) + 1;
+      const sentiment = String(mood.sentimentLabel || "neutral")
+        .toLowerCase()
+        .trim();
 
-      totalSentimentScore += m.sentimentScore || 0;
+      emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
 
-      if (m.sentimentLabel === "positive") positiveCount++;
-      if (m.sentimentLabel === "negative") negativeCount++;
+      const score =
+        typeof mood.sentimentScore === "number"
+          ? mood.sentimentScore
+          : getSentimentScore(sentiment);
+
+      totalScore += score;
+
+      if (sentiment === "positive") positiveCount++;
+      else if (sentiment === "negative") negativeCount++;
+      else neutralCount++;
     });
 
-    // ---------------------------
-    // 2. Average Sentiment (Label)
-    // ---------------------------
-    let avgSentimentLabel = "Neutral";
-    if (positiveCount > negativeCount) avgSentimentLabel = "Positive";
-    if (negativeCount > positiveCount) avgSentimentLabel = "Negative";
+    let avgSentiment = "Neutral";
+    if (positiveCount > negativeCount && positiveCount >= neutralCount) {
+      avgSentiment = "Positive";
+    } else if (negativeCount > positiveCount && negativeCount >= neutralCount) {
+      avgSentiment = "Negative";
+    }
 
-    // ---------------------------
-    // 3. Top Emotion
-    // ---------------------------
-    const topEmotion = Object.entries(emotionCounts)
-      .sort((a, b) => b[1] - a[1])[0][0];
+    const topEmotion =
+      Object.entries(emotionCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ||
+      "neutral";
 
-    // ---------------------------
-    // 4. Trend Detection (NEW 🔥)
-    // ---------------------------
     let trend = "stable";
 
     if (moods.length >= 2) {
-      const first = moods[0].sentimentScore || 0;
-      const last = moods[moods.length - 1].sentimentScore || 0;
+      const firstMood = moods[0];
+      const lastMood = moods[moods.length - 1];
 
-      if (last > first + 0.2) trend = "improving";
-      else if (last < first - 0.2) trend = "declining";
+      const firstScore =
+        typeof firstMood.sentimentScore === "number"
+          ? firstMood.sentimentScore
+          : getSentimentScore(firstMood.sentimentLabel);
+
+      const lastScore =
+        typeof lastMood.sentimentScore === "number"
+          ? lastMood.sentimentScore
+          : getSentimentScore(lastMood.sentimentLabel);
+
+      if (lastScore > firstScore + 0.2) trend = "improving";
+      else if (lastScore < firstScore - 0.2) trend = "declining";
     }
 
-    // ---------------------------
-    // 5. Smart AI Summary (UPGRADED 🔥)
-    // ---------------------------
     let summaryText = "";
 
-    if (avgSentimentLabel === "Positive") {
-      summaryText = `You had a positive emotional trend this week with dominant feelings of ${topEmotion}. Keep maintaining these healthy patterns!`;
-    } else if (avgSentimentLabel === "Negative") {
-      summaryText = `This week showed more challenging emotions, especially ${topEmotion}. Consider focusing on self-care and support strategies.`;
+    if (avgSentiment === "Positive") {
+      summaryText = `You had a positive emotional trend this week, with ${topEmotion} appearing most often. Keep maintaining these healthy emotional patterns.`;
+    } else if (avgSentiment === "Negative") {
+      summaryText = `This week showed more challenging emotions, especially ${topEmotion}. Consider focusing on self-care, reflection, and support strategies.`;
     } else {
-      summaryText = `Your emotions were balanced this week, with ${topEmotion} being most frequent. Keep tracking to understand patterns better.`;
+      summaryText = `Your emotions were fairly balanced this week, with ${topEmotion} appearing most often. Keep tracking your moods to understand your patterns better.`;
     }
 
     if (trend === "improving") {
-      summaryText += " The good news is your mood is improving over time 📈.";
+      summaryText += " Your emotional trend also appears to be improving over time.";
     } else if (trend === "declining") {
-      summaryText += " There is a slight downward trend recently ⚠️.";
+      summaryText += " There is a slight downward trend recently, so extra care may be helpful.";
     }
 
-    // ---------------------------
-    // FINAL RESPONSE
-    // ---------------------------
-    res.json({
+    return res.status(200).json({
       success: true,
       message: "Weekly insights generated successfully",
       data: {
         totalEntries: moods.length,
-        avgSentiment: avgSentimentLabel, // ✅ FIXED
+        avgSentiment,
+        avgSentimentScore: Number((totalScore / moods.length).toFixed(2)),
         topEmotion,
         emotionCounts,
-        trend, // 🔥 NEW
+        trend,
         positiveCount,
         negativeCount,
+        neutralCount,
         summaryText,
       },
     });
-
   } catch (error) {
     console.error("getWeeklyInsights error:", error.message);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Insight generation failed",
       error: error.message,

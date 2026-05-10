@@ -1,10 +1,14 @@
 const express = require("express");
+
 const {
   getAdminSummary,
   getAdminUsers,
   getHighRiskEntries,
   getSupportUsers,
-  getSystemStatus, // ✅ ADD THIS
+  getSystemStatus,
+  getChatbotStats,
+  markAlertReviewed,
+  contactRiskUser,
 } = require("../controllers/adminController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -12,23 +16,35 @@ const { adminOnly } = require("../middleware/adminMiddleware");
 
 const router = express.Router();
 
-// 🔒 Apply middleware globally
 router.use(protect);
 router.use(adminOnly);
 
-// 📊 Admin Dashboard Summary
+// Dashboard Analytics
 router.get("/summary", getAdminSummary);
+router.get("/system-status", getSystemStatus);
+router.get("/chatbot-stats", getChatbotStats);
 
-// 👥 All Users
+// User Management
 router.get("/users", getAdminUsers);
-
-// 🚨 High Risk Mood Entries
-router.get("/high-risk", getHighRiskEntries);
-
-// 🧠 Users needing support
 router.get("/support-users", getSupportUsers);
 
-// 🚀 NEW: System Status (LIVE DATA)
-router.get("/system-status", getSystemStatus);
+// Risk Monitoring
+router.get("/high-risk", getHighRiskEntries);
+
+// ✅ Mark Alert As Reviewed
+router.patch("/alerts/:id/review", markAlertReviewed);
+
+// 📩 Contact Risk User
+router.post("/alerts/:id/contact", contactRiskUser);
+
+// Health Check
+router.get("/health", (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: "Admin routes operational",
+    admin: req.user?.email || "Unknown",
+    timestamp: new Date(),
+  });
+});
 
 module.exports = router;

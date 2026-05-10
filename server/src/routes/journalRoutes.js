@@ -1,20 +1,40 @@
 const express = require("express");
+
 const {
   createJournalEntry,
   getMyJournalEntries,
 } = require("../controllers/journalController");
 
-const { protect } = require("../middleware/authMiddleware");
+const {
+  protect,
+} = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// 🔒 Apply auth globally
+// --------------------------------------------------
+// Protected Journal Routes
+// --------------------------------------------------
 router.use(protect);
 
-// ✍️ Create Journal Entry
+// --------------------------------------------------
+// Journal Entry Management
+// --------------------------------------------------
+
+// ✍️ Create New Journal Entry
 router.post("/", createJournalEntry);
 
-// 📖 Get My Journal Entries
+// 📖 Get Logged User Journal Entries
 router.get("/", getMyJournalEntries);
+
+// --------------------------------------------------
+// Health Check
+// --------------------------------------------------
+router.get("/health", (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: "Journal service is running",
+    timestamp: new Date(),
+  });
+});
 
 module.exports = router;

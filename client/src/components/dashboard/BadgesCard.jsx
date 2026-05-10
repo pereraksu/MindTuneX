@@ -1,10 +1,21 @@
 import React, { useMemo } from "react";
+import { useTheme } from "../../context/useTheme";
 
-const BadgesCard = ({ moods, streak }) => {
+const BADGE_DEFS = [
+  { id: "firstStep", name: "First Step", desc: "Log your first mood", unlockDesc: "Mood journey begun", icon: "🌱", gradFrom: "#10b981", gradTo: "#14b8a6" },
+  { id: "streak3", name: "3-Day Streak", desc: "Log in for 3 days", unlockDesc: "Consistency unlocked", icon: "🔥", gradFrom: "#f59e0b", gradTo: "#f43f5e" },
+  { id: "positivity", name: "Positivity", desc: "Record a joyful mood", unlockDesc: "Good vibes captured", icon: "✨", gradFrom: "#f59e0b", gradTo: "#fbbf24" },
+  { id: "streak7", name: "1 Week Master", desc: "Reach a 7-day streak", unlockDesc: "7 days straight", icon: "🏆", gradFrom: "#8b5cf6", gradTo: "#ec4899" },
+  { id: "consistent", name: "Self-Aware", desc: "Log 10 total entries", unlockDesc: "Deep self-knowledge", icon: "🧠", gradFrom: "#0ea5e9", gradTo: "#6366f1" },
+];
+
+const BadgesCard = ({ moods = [], streak = 0 }) => {
+  const { darkMode } = useTheme();
+
   const earnedBadges = useMemo(() => {
     const totalEntries = moods.length;
     const hasPositive = moods.some((m) =>
-      ["joy", "calm", "love"].includes(m.predictedEmotion)
+      ["joy", "calm", "love"].includes(m.predictedEmotion?.toLowerCase())
     );
 
     return {
@@ -16,135 +27,287 @@ const BadgesCard = ({ moods, streak }) => {
     };
   }, [moods, streak]);
 
-  const badges = [
-    {
-      id: "firstStep",
-      name: "First Step",
-      desc: "Logged your first mood",
-      icon: "🌱",
-      earned: earnedBadges.firstStep,
-      color: "from-emerald-400 to-teal-500",
-    },
-    {
-      id: "streak3",
-      name: "3-Day Streak",
-      desc: "Logged in for 3 days",
-      icon: "🔥",
-      earned: earnedBadges.streak3,
-      color: "from-orange-400 to-rose-500",
-    },
-    {
-      id: "positivity",
-      name: "Positivity",
-      desc: "Recorded a joyful mood",
-      icon: "✨",
-      earned: earnedBadges.positivity,
-      color: "from-amber-300 to-yellow-500",
-    },
-    {
-      id: "streak7",
-      name: "1 Week Master",
-      desc: "7-day streak",
-      icon: "🏆",
-      earned: earnedBadges.streak7,
-      color: "from-violet-400 to-fuchsia-500",
-    },
-    {
-      id: "consistent",
-      name: "Self-Aware",
-      desc: "10 total entries",
-      icon: "🧠",
-      earned: earnedBadges.consistent,
-      color: "from-sky-400 to-blue-600",
-    },
-  ];
+  const badges = BADGE_DEFS.map((b) => ({
+    ...b,
+    earned: earnedBadges[b.id],
+  }));
 
-  const unlockedCount = Object.values(earnedBadges).filter(Boolean).length;
+  const unlockedCount = badges.filter((b) => b.earned).length;
   const progress = (unlockedCount / badges.length) * 100;
 
   return (
-    <div className="rounded-[2rem] border border-white/60 bg-white/70 p-6 shadow-2xl shadow-sky-100/40 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/70 transition-all">
+    <>
+      <style>{STYLES(darkMode)}</style>
 
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-            Achievements
-          </p>
-          <h3 className="mt-1 text-xl font-semibold text-slate-800 dark:text-white">
-            Your Badges
-          </h3>
-        </div>
+      <div className="badges-card">
+        <div className="badges-glow" />
 
-        <div className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs font-bold text-slate-500">
-          {unlockedCount} / {badges.length}
-        </div>
-      </div>
-
-      {/* 🔥 Progress Bar */}
-      <div className="mb-6">
-        <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-sky-500 to-cyan-500 transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <p className="mt-2 text-xs text-slate-400">
-          Progress: {Math.round(progress)}%
-        </p>
-      </div>
-
-      {/* Badges */}
-      <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide">
-        {badges.map((badge) => (
-          <div
-            key={badge.id}
-            className={`group relative min-w-[150px] rounded-2xl border p-4 text-center transition-all duration-300 
-            
-            ${
-              badge.earned
-                ? "bg-white shadow-xl hover:-translate-y-1 dark:bg-slate-800"
-                : "bg-slate-50/50 border-dashed opacity-60 grayscale dark:bg-slate-800/30"
-            }`}
-          >
-            {/* Glow Effect */}
-            {badge.earned && (
-              <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${badge.color} opacity-10 blur-xl`} />
-            )}
-
-            {/* Icon */}
-            <div
-              className={`relative mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-2xl transition-all 
-              
-              ${
-                badge.earned
-                  ? `bg-gradient-to-br ${badge.color} text-white shadow-lg`
-                  : "bg-slate-200 dark:bg-slate-700"
-              }`}
-            >
-              {badge.icon}
-            </div>
-
-            {/* Title */}
-            <p
-              className={`text-sm font-bold ${
-                badge.earned
-                  ? "text-slate-800 dark:text-white"
-                  : "text-slate-500"
-              }`}
-            >
-              {badge.name}
-            </p>
-
-            {/* Desc */}
-            <p className="mt-1 text-[10px] text-slate-500">
-              {badge.earned ? "Unlocked 🎉" : badge.desc}
+        <div className="badges-header">
+          <div>
+            <p className="badges-eyebrow">Achievements</p>
+            <h2 className="badges-title">Your Badges</h2>
+            <p className="badges-subtitle">
+              Track your emotional wellness milestones.
             </p>
           </div>
-        ))}
+
+          <span className="badges-counter">
+            {unlockedCount} / {badges.length}
+          </span>
+        </div>
+
+        <div className="badges-progress-wrap">
+          <div className="badges-progress-track">
+            <div
+              className="badges-progress-fill"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          <p className="badges-progress-label">
+            Progress: {Math.round(progress)}%
+          </p>
+        </div>
+
+        <div className="badges-row">
+          {badges.map((badge) => (
+            <div
+              key={badge.id}
+              className={`badge-item ${badge.earned ? "earned" : "locked"}`}
+            >
+              {badge.earned && (
+                <>
+                  <div
+                    className="badge-bar"
+                    style={{
+                      background: `linear-gradient(90deg, ${badge.gradFrom}, ${badge.gradTo})`,
+                    }}
+                  />
+
+                  <div
+                    className="badge-glow"
+                    style={{
+                      background: `radial-gradient(circle, ${badge.gradFrom}55 0%, transparent 70%)`,
+                    }}
+                  />
+                </>
+              )}
+
+              <div
+                className="badge-icon-wrap"
+                style={
+                  badge.earned
+                    ? {
+                        background: `linear-gradient(135deg, ${badge.gradFrom}22, ${badge.gradTo}33)`,
+                        borderColor: `${badge.gradFrom}44`,
+                      }
+                    : {}
+                }
+              >
+                {badge.earned ? badge.icon : "🔒"}
+              </div>
+
+              <p className="badge-name">{badge.name}</p>
+
+              <p className="badge-status">
+                {badge.earned ? badge.unlockDesc : badge.desc}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
+
+const STYLES = (darkMode) => `
+  .badges-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid ${darkMode ? "rgba(255,255,255,0.09)" : "rgba(15,23,42,0.08)"};
+    background: ${darkMode ? "rgba(15,23,42,0.72)" : "rgba(255,255,255,0.78)"};
+    padding: 24px;
+    font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+    backdrop-filter: blur(22px);
+    box-shadow: ${darkMode ? "0 22px 55px rgba(0,0,0,0.28)" : "0 22px 55px rgba(15,23,42,0.08)"};
+  }
+
+  .badges-glow {
+    position: absolute;
+    right: -90px;
+    top: -90px;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, rgba(20,184,166,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .badges-header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .badges-eyebrow {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: ${darkMode ? "rgba(255,255,255,0.34)" : "rgba(15,23,42,0.42)"};
+    margin-bottom: 6px;
+  }
+
+  .badges-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: ${darkMode ? "rgba(255,255,255,0.94)" : "#0f172a"};
+    margin-bottom: 4px;
+  }
+
+  .badges-subtitle {
+    font-size: 13px;
+    color: ${darkMode ? "rgba(255,255,255,0.42)" : "rgba(15,23,42,0.52)"};
+  }
+
+  .badges-counter {
+    padding: 7px 15px;
+    border-radius: 999px;
+    background: rgba(20,184,166,0.12);
+    border: 1px solid rgba(20,184,166,0.28);
+    color: #14b8a6;
+    font-size: 12px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .badges-progress-wrap {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 22px;
+  }
+
+  .badges-progress-track {
+    height: 6px;
+    width: 100%;
+    border-radius: 999px;
+    background: ${darkMode ? "rgba(255,255,255,0.07)" : "rgba(15,23,42,0.07)"};
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .badges-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #14b8a6, #0ea5e9, #8b5cf6);
+    transition: width 0.6s ease;
+    box-shadow: 0 0 14px rgba(20,184,166,0.45);
+  }
+
+  .badges-progress-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: ${darkMode ? "rgba(255,255,255,0.38)" : "rgba(15,23,42,0.48)"};
+  }
+
+  .badges-row {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .badges-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .badge-item {
+    position: relative;
+    overflow: hidden;
+    min-width: 148px;
+    max-width: 148px;
+    flex-shrink: 0;
+    border-radius: 18px;
+    border: 1px solid ${darkMode ? "rgba(255,255,255,0.07)" : "rgba(15,23,42,0.07)"};
+    background: ${darkMode ? "rgba(255,255,255,0.035)" : "rgba(255,255,255,0.68)"};
+    padding: 17px 13px;
+    text-align: center;
+    transition: all 0.22s ease;
+  }
+
+  .badge-item.earned {
+    background: ${darkMode ? "rgba(255,255,255,0.055)" : "rgba(255,255,255,0.88)"};
+  }
+
+  .badge-item.earned:hover {
+    transform: translateY(-3px);
+    border-color: ${darkMode ? "rgba(255,255,255,0.14)" : "rgba(14,165,233,0.18)"};
+    box-shadow: ${darkMode ? "0 16px 34px rgba(0,0,0,0.24)" : "0 16px 34px rgba(15,23,42,0.08)"};
+  }
+
+  .badge-item.locked {
+    opacity: 0.55;
+    filter: grayscale(0.45);
+  }
+
+  .badge-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    opacity: 0.95;
+  }
+
+  .badge-glow {
+    position: absolute;
+    top: -45px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 130px;
+    height: 130px;
+    pointer-events: none;
+  }
+
+  .badge-icon-wrap {
+    position: relative;
+    z-index: 1;
+    width: 52px;
+    height: 52px;
+    border-radius: 17px;
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    border: 1px solid ${darkMode ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)"};
+    background: ${darkMode ? "rgba(255,255,255,0.055)" : "rgba(15,23,42,0.045)"};
+  }
+
+  .badge-name {
+    position: relative;
+    z-index: 1;
+    font-size: 13px;
+    font-weight: 900;
+    color: ${darkMode ? "rgba(255,255,255,0.82)" : "#0f172a"};
+    margin-bottom: 5px;
+  }
+
+  .badge-status {
+    position: relative;
+    z-index: 1;
+    font-size: 10.8px;
+    font-weight: 600;
+    line-height: 1.45;
+    color: ${darkMode ? "rgba(255,255,255,0.36)" : "rgba(15,23,42,0.5)"};
+  }
+`;
 
 export default BadgesCard;

@@ -1,5 +1,20 @@
 const mongoose = require("mongoose");
 
+const ALLOWED_EMOTIONS = [
+  "joy",
+  "calm",
+  "stress",
+  "anxiety",
+  "sadness",
+  "anger",
+  "fatigue",
+  "love",
+  "fear",
+  "disgust",
+  "surprise",
+  "neutral",
+];
+
 const topPredictionSchema = new mongoose.Schema(
   {
     emotion: {
@@ -7,6 +22,7 @@ const topPredictionSchema = new mongoose.Schema(
       required: true,
       trim: true,
       lowercase: true,
+      enum: ALLOWED_EMOTIONS,
     },
     score: {
       type: Number,
@@ -46,6 +62,7 @@ const moodEntrySchema = new mongoose.Schema(
       required: true,
       trim: true,
       lowercase: true,
+      enum: ALLOWED_EMOTIONS,
       index: true,
     },
 
@@ -66,6 +83,7 @@ const moodEntrySchema = new mongoose.Schema(
       type: String,
       enum: ["low", "medium", "high"],
       default: "low",
+      lowercase: true,
     },
 
     sentimentScore: {
@@ -115,18 +133,25 @@ const moodEntrySchema = new mongoose.Schema(
         "general",
       ],
       default: "general",
+      lowercase: true,
     },
 
     explanationKeywords: {
       type: [String],
       default: [],
+      validate: {
+        validator(value) {
+          return value.length <= 20;
+        },
+        message: "Maximum 20 explanation keywords allowed",
+      },
     },
 
     top3Predictions: {
       type: [topPredictionSchema],
       default: [],
       validate: {
-        validator: function (value) {
+        validator(value) {
           return value.length <= 3;
         },
         message: "top3Predictions cannot contain more than 3 items",
@@ -135,7 +160,7 @@ const moodEntrySchema = new mongoose.Schema(
 
     source: {
       type: String,
-      enum: ["journal", "analysis", "quick_checkin", "support_page"],
+      enum: ["journal", "analysis", "quick_checkin", "support_page", "chatbot"],
       default: "journal",
       lowercase: true,
       index: true,
@@ -146,9 +171,18 @@ const moodEntrySchema = new mongoose.Schema(
   }
 );
 
-// Useful compound indexes for analytics/admin queries
 moodEntrySchema.index({ user: 1, createdAt: -1 });
 moodEntrySchema.index({ supportLevel: 1, createdAt: -1 });
+moodEntrySchema.index({ riskScore: -1, createdAt: -1 });
 moodEntrySchema.index({ user: 1, supportLevel: 1, createdAt: -1 });
+moodEntrySchema.index({ user: 1, predictedEmotion: 1, createdAt: -1 });
+moodEntrySchema.index({ user: 1, sentimentLabel: 1, createdAt: -1 });
+
+moodEntrySchema.set("toJSON", {
+  transform: (_, ret) => {
+    delete ret.__v;
+    return ret;
+  },
+});
 
 module.exports = mongoose.model("MoodEntry", moodEntrySchema);

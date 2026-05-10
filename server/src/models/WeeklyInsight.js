@@ -1,7 +1,25 @@
 const mongoose = require("mongoose");
 
+const ALLOWED_EMOTIONS = [
+  "joy",
+  "calm",
+  "stress",
+  "anxiety",
+  "sadness",
+  "anger",
+  "fatigue",
+  "love",
+  "fear",
+  "disgust",
+  "surprise",
+  "neutral",
+];
+
 const weeklyInsightSchema = new mongoose.Schema(
   {
+    // --------------------------------------------------
+    // User Reference
+    // --------------------------------------------------
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -9,6 +27,9 @@ const weeklyInsightSchema = new mongoose.Schema(
       index: true,
     },
 
+    // --------------------------------------------------
+    // Week Period
+    // --------------------------------------------------
     weekStartDate: {
       type: Date,
       required: true,
@@ -20,6 +41,9 @@ const weeklyInsightSchema = new mongoose.Schema(
       required: true,
     },
 
+    // --------------------------------------------------
+    // Analytics Summary
+    // --------------------------------------------------
     totalEntries: {
       type: Number,
       default: 0,
@@ -33,40 +57,102 @@ const weeklyInsightSchema = new mongoose.Schema(
       max: 1,
     },
 
-    topEmotion: {
+    avgSentimentLabel: {
       type: String,
+      enum: ["positive", "negative", "neutral"],
       default: "neutral",
-      trim: true,
       lowercase: true,
     },
 
-    // 🔥 Better structure instead of raw Object
+    topEmotion: {
+      type: String,
+      enum: ALLOWED_EMOTIONS,
+      default: "neutral",
+      trim: true,
+      lowercase: true,
+      index: true,
+    },
+
+    // --------------------------------------------------
+    // Emotion Distribution
+    // --------------------------------------------------
     emotionCounts: {
       type: Map,
       of: Number,
       default: {},
     },
 
-    summaryText: {
-      type: String,
-      default: "",
-      trim: true,
-      maxlength: 1000,
+    // --------------------------------------------------
+    // Sentiment Breakdown
+    // --------------------------------------------------
+    positiveCount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
 
-    // 🔥 NEW: trend direction (VERY IMPORTANT)
-    trend: {
-      type: String,
-      enum: ["improving", "declining", "stable"],
-      default: "stable",
+    negativeCount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
 
-    // 🔥 NEW: risk level (admin analytics)
+    neutralCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    // --------------------------------------------------
+    // High Risk Tracking
+    // --------------------------------------------------
+    highRiskCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     riskLevel: {
       type: String,
       enum: ["low", "moderate", "high"],
       default: "low",
+      lowercase: true,
       index: true,
+    },
+
+    // --------------------------------------------------
+    // Mood Trend
+    // --------------------------------------------------
+    trend: {
+      type: String,
+      enum: ["improving", "declining", "stable"],
+      default: "stable",
+      lowercase: true,
+      index: true,
+    },
+
+    // --------------------------------------------------
+    // AI Generated Summary
+    // --------------------------------------------------
+    summaryText: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 1200,
+    },
+
+    // --------------------------------------------------
+    // AI Metadata
+    // --------------------------------------------------
+    generatedBy: {
+      type: String,
+      default: "MindTuneX AI",
+      trim: true,
+    },
+
+    modelVersion: {
+      type: String,
+      default: "v1.0",
     },
   },
   {
@@ -74,10 +160,56 @@ const weeklyInsightSchema = new mongoose.Schema(
   }
 );
 
-// 🔥 Prevent duplicate weekly insight for same user/week
+// --------------------------------------------------
+// Prevent Duplicate Weekly Insight
+// --------------------------------------------------
 weeklyInsightSchema.index(
   { user: 1, weekStartDate: 1 },
   { unique: true }
 );
 
-module.exports = mongoose.model("WeeklyInsight", weeklyInsightSchema);
+// --------------------------------------------------
+// Performance Indexes
+// --------------------------------------------------
+weeklyInsightSchema.index({
+  user: 1,
+  createdAt: -1,
+});
+
+weeklyInsightSchema.index({
+  riskLevel: 1,
+  createdAt: -1,
+});
+
+weeklyInsightSchema.index({
+  trend: 1,
+  createdAt: -1,
+});
+
+weeklyInsightSchema.index({
+  topEmotion: 1,
+  createdAt: -1,
+});
+
+// --------------------------------------------------
+// Virtual Field
+// --------------------------------------------------
+weeklyInsightSchema.virtual("isHighRisk").get(function () {
+  return this.riskLevel === "high";
+});
+
+// --------------------------------------------------
+// Clean JSON Output
+// --------------------------------------------------
+weeklyInsightSchema.set("toJSON", {
+  virtuals: true,
+  transform: (_, ret) => {
+    delete ret.__v;
+    return ret;
+  },
+});
+
+module.exports = mongoose.model(
+  "WeeklyInsight",
+  weeklyInsightSchema
+);
