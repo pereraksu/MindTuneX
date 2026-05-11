@@ -68,14 +68,15 @@ const getRiskTone = (level) => {
   };
 };
 
-const formatDate = (iso) =>
-  iso
-    ? new Date(iso).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : "N/A";
+const formatDate = (iso) => {
+  if (!iso) return "N/A";
+
+  return new Date(iso).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
 
 const RiskAlertsPage = () => {
   const { user, logout, isAdmin } = useAuth();
@@ -84,6 +85,7 @@ const RiskAlertsPage = () => {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const loadAlerts = async () => {
     try {
@@ -92,8 +94,12 @@ const RiskAlertsPage = () => {
 
       const res = await getHighRiskEntriesApi();
 
+      console.log("Risk alerts response:", res);
+
       const data = Array.isArray(res)
         ? res
+        : Array.isArray(res?.data?.alerts)
+        ? res.data.alerts
         : Array.isArray(res?.data?.data)
         ? res.data.data
         : Array.isArray(res?.data)
@@ -103,7 +109,10 @@ const RiskAlertsPage = () => {
       setAlerts(data);
     } catch (err) {
       console.error("Failed to load alerts:", err);
-      setError("Unable to fetch risk alerts. Please try again.");
+      setError(
+        err?.response?.data?.message ||
+          "Unable to fetch risk alerts. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -113,6 +122,11 @@ const RiskAlertsPage = () => {
     loadAlerts();
   }, []);
 
+  const showSuccess = (message) => {
+    setSuccessMsg(message);
+    setTimeout(() => setSuccessMsg(""), 2500);
+  };
+
   return (
     <>
       <style>{STYLES(darkMode)}</style>
@@ -120,6 +134,8 @@ const RiskAlertsPage = () => {
       <div className="ra-root">
         <div className="ra-glow ra-glow-1" />
         <div className="ra-glow ra-glow-2" />
+
+        {successMsg && <div className="ra-toast">✅ {successMsg}</div>}
 
         <Sidebar forceAdmin />
 
@@ -169,15 +185,20 @@ const RiskAlertsPage = () => {
                       Live Risk Watch
                     </div>
 
-                    <button onClick={loadAlerts} className="ra-refresh">
-                      ↻ Refresh Alerts
+                    <button
+                      type="button"
+                      onClick={loadAlerts}
+                      className="ra-refresh"
+                      disabled={loading}
+                    >
+                      {loading ? "Refreshing..." : "↻ Refresh Alerts"}
                     </button>
                   </div>
                 </div>
               </section>
 
               {loading ? (
-                <StateCard icon="⏳" title="Loading risk alerts…" loading />
+                <StateCard title="Loading risk alerts..." loading />
               ) : error ? (
                 <StateCard
                   icon="⚠️"
@@ -199,7 +220,8 @@ const RiskAlertsPage = () => {
                     <AlertCard
                       key={entry._id}
                       entry={entry}
-                      onRefresh={loadAlerts}
+                      setAlerts={setAlerts}
+                      showSuccess={showSuccess}
                     />
                   ))}
                 </div>
@@ -212,7 +234,7 @@ const RiskAlertsPage = () => {
   );
 };
 
-const AlertCard = ({ entry, onRefresh }) => {
+const AlertCard = ({ entry, setAlerts, showSuccess }) => {
   const [reviewing, setReviewing] = useState(false);
   const [contacting, setContacting] = useState(false);
 
@@ -220,13 +242,17 @@ const AlertCard = ({ entry, onRefresh }) => {
   const emoKey = entry.predictedEmotion?.toLowerCase() || "neutral";
   const emoEmoji = MOOD_EMOJI[emoKey] || "😐";
   const emoColor = MOOD_COLOR[emoKey] || "#94a3b8";
+
   const confPct =
-    entry.confidence != null ? Math.round(entry.confidence * 100) : null;
+    entry.confidence !== null && entry.confidence !== undefined
+      ? Math.round(entry.confidence * 100)
+      : null;
 
   const fullName = entry.user?.fullName || entry.user?.name || "Unknown User";
 
   const initials = fullName
     .split(" ")
+    .filter(Boolean)
     .map((n) => n[0])
     .join("")
     .slice(0, 2)
@@ -235,12 +261,14 @@ const AlertCard = ({ entry, onRefresh }) => {
   const handleReview = async () => {
     try {
       setReviewing(true);
+
       await markReviewedApi(entry._id);
-      await onRefresh();
-      alert("Alert marked as reviewed");
+
+      setAlerts((prev) => prev.filter((item) => item._id !== entry._id));
+
+      showSuccess("Alert marked as reviewed");
     } catch (err) {
       console.error("Review failed:", err);
-      alert("Failed to mark as reviewed");
     } finally {
       setReviewing(false);
     }
@@ -251,17 +279,16 @@ const AlertCard = ({ entry, onRefresh }) => {
       setContacting(true);
 
       const res = await contactUserApi(entry._id);
-      const email = res?.email || entry.user?.email;
+      const email = res?.email || res?.data?.email || entry.user?.email;
 
       if (!email) {
-        alert("User email not found");
+        showSuccess("User email not found");
         return;
       }
 
       window.location.href = `mailto:${email}`;
     } catch (err) {
       console.error("Contact failed:", err);
-      alert("Failed to contact user");
     } finally {
       setContacting(false);
     }
@@ -285,7 +312,7 @@ const AlertCard = ({ entry, onRefresh }) => {
             borderColor: `${tone.color}38`,
           }}
         >
-          {initials}
+          {initials || "U"}
         </div>
 
         <div className="ra-user">
@@ -353,6 +380,7 @@ const AlertCard = ({ entry, onRefresh }) => {
 
         <div className="ra-card-actions">
           <button
+            type="button"
             className="ra-review"
             onClick={handleReview}
             disabled={reviewing}
@@ -361,6 +389,7 @@ const AlertCard = ({ entry, onRefresh }) => {
           </button>
 
           <button
+            type="button"
             className="ra-contact"
             onClick={handleContact}
             disabled={contacting}
@@ -388,7 +417,7 @@ const StateCard = ({ icon, title, text, loading, danger, success, action }) => (
     {text && <p>{text}</p>}
 
     {action && (
-      <button onClick={action} className="ra-state-btn">
+      <button type="button" onClick={action} className="ra-state-btn">
         Try Again
       </button>
     )}
@@ -410,6 +439,23 @@ const STYLES = (darkMode) => `
         : "linear-gradient(135deg, #f8fafc 0%, #fff7ed 50%, #fef2f2 100%)"
     };
     color: ${darkMode ? "#f8fafc" : "#0f172a"};
+  }
+
+  .ra-toast {
+    position: fixed;
+    top: 22px;
+    right: 24px;
+    z-index: 9999;
+    padding: 14px 18px;
+    border-radius: 16px;
+    background: ${darkMode ? "rgba(15,23,42,0.95)" : "rgba(255,255,255,0.96)"};
+    color: ${darkMode ? "#f8fafc" : "#0f172a"};
+    border: 1px solid ${
+      darkMode ? "rgba(255,255,255,0.14)" : "rgba(15,23,42,0.10)"
+    };
+    box-shadow: 0 18px 45px rgba(15,23,42,0.18);
+    font-size: 13px;
+    font-weight: 900;
   }
 
   .ra-glow {
@@ -453,7 +499,9 @@ const STYLES = (darkMode) => `
   }
 
   @media(min-width:1024px) {
-    .ra-main { padding: 38px 44px; }
+    .ra-main {
+      padding: 38px 44px;
+    }
   }
 
   .ra-container {
@@ -488,17 +536,6 @@ const STYLES = (darkMode) => `
     position: relative;
     overflow: hidden;
     padding: 34px;
-  }
-
-  .ra-hero::after {
-    content: "";
-    position: absolute;
-    width: 260px;
-    height: 260px;
-    right: -80px;
-    top: -90px;
-    border-radius: 999px;
-    background: radial-gradient(circle, rgba(251,113,133,0.22), transparent 65%);
   }
 
   .ra-hero-line,
@@ -600,7 +637,6 @@ const STYLES = (darkMode) => `
     font-size: 12px;
     font-weight: 800;
     color: ${darkMode ? "rgba(226,232,240,0.68)" : "rgba(15,23,42,0.62)"};
-    box-shadow: ${darkMode ? "none" : "0 10px 24px rgba(15,23,42,0.06)"};
   }
 
   .ra-pill.danger,
@@ -622,8 +658,15 @@ const STYLES = (darkMode) => `
   }
 
   @keyframes ra-pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.45; transform: scale(0.82); }
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    50% {
+      opacity: 0.45;
+      transform: scale(0.82);
+    }
   }
 
   .ra-refresh,
@@ -644,10 +687,9 @@ const STYLES = (darkMode) => `
     font-size: 13px;
   }
 
-  .ra-refresh:hover,
-  .ra-state-btn:hover {
-    transform: translateY(-2px);
-    opacity: 0.92;
+  .ra-refresh:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
   }
 
   .ra-grid {
@@ -657,7 +699,9 @@ const STYLES = (darkMode) => `
   }
 
   @media(min-width:1280px) {
-    .ra-grid { grid-template-columns: repeat(2, 1fr); }
+    .ra-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   .ra-card {
@@ -670,11 +714,6 @@ const STYLES = (darkMode) => `
   .ra-card:hover {
     transform: translateY(-4px);
     border-color: rgba(251,113,133,0.30);
-    box-shadow: ${
-      darkMode
-        ? "0 32px 80px rgba(0,0,0,0.48)"
-        : "0 30px 70px rgba(15,23,42,0.14)"
-    };
   }
 
   .ra-card-head {
@@ -859,11 +898,6 @@ const STYLES = (darkMode) => `
     border: 1px solid ${darkMode ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.08)"};
   }
 
-  .ra-review:hover,
-  .ra-contact:hover {
-    transform: translateY(-1px);
-  }
-
   .ra-state {
     min-height: 42vh;
     padding: 52px 24px;
@@ -885,18 +919,6 @@ const STYLES = (darkMode) => `
     font-size: 30px;
     background: ${darkMode ? "rgba(255,255,255,0.055)" : "rgba(255,255,255,0.72)"};
     border: 1px solid ${darkMode ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.08)"};
-  }
-
-  .ra-state.success .ra-state-icon {
-    color: #34d399;
-    background: rgba(52,211,153,0.11);
-    border-color: rgba(52,211,153,0.26);
-  }
-
-  .ra-state.danger .ra-state-icon {
-    color: #fb7185;
-    background: rgba(244,63,94,0.11);
-    border-color: rgba(244,63,94,0.26);
   }
 
   .ra-state h3 {
@@ -930,7 +952,9 @@ const STYLES = (darkMode) => `
   }
 
   @keyframes ra-spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   @media(max-width: 720px) {

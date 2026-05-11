@@ -146,4 +146,14 @@ export const contactUserApi = async (id) => {
   return res.data;
 };
 
+export const deleteUserApi = async (id) => {
+  const res = await API.delete(`/users/${id}`);
+  return res.data;
+};
+
+export const updateUserRoleApi = async (id, role) => {
+  const res = await API.put(`/users/${id}/role`, { role });
+  return res.data;
+};
+
 export default API;

@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
-import { getAdminUsersApi } from "../api/adminApi";
+import { getAdminUsersApi, updateUserRoleApi, deleteUserApi } from "../api/adminApi";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/useTheme";
 
 const ManageUsersPage = () => {
   const { user, logout, isAdmin } = useAuth();
+  const { darkMode } = useTheme();
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -14,8 +17,17 @@ const ManageUsersPage = () => {
     try {
       setLoading(true);
       setError("");
+
       const res = await getAdminUsersApi();
-      setUsers(res?.data?.data || res?.data || res || []);
+      const data = Array.isArray(res)
+        ? res
+        : Array.isArray(res?.data?.data)
+        ? res.data.data
+        : Array.isArray(res?.data)
+        ? res.data
+        : [];
+
+      setUsers(data);
     } catch (err) {
       console.error("Failed to load users:", err);
       setError("Unable to fetch user data. Please try again.");
@@ -24,13 +36,39 @@ const ManageUsersPage = () => {
     }
   };
 
+  const handleDelete = async (id) => {
+  if (!window.confirm("Are you sure you want to delete this user?")) return;
+
+  try {
+    await deleteUserApi(id);
+    setUsers((prev) => prev.filter((u) => u._id !== id));
+  } catch (err) {
+    console.error("Delete failed:", err);
+    alert("Delete failed");
+  }
+};
+
+const handleRoleChange = async (id, currentRole) => {
+  const newRole = currentRole === "admin" ? "user" : "admin";
+
+  try {
+    await updateUserRoleApi(id, newRole);
+
+    setUsers((prev) =>
+      prev.map((u) => (u._id === id ? { ...u, role: newRole } : u))
+    );
+  } catch (err) {
+    console.error("Role update failed:", err);
+    alert("Role update failed");
+  }
+};
   useEffect(() => {
     loadUsers();
   }, []);
 
   return (
     <>
-      <style>{STYLES}</style>
+      <style>{STYLES(darkMode)}</style>
 
       <div className="mu-root">
         <div className="mu-glow mu-glow-1" />
@@ -131,7 +169,6 @@ const ManageUsersPage = () => {
                               <td>
                                 <div className="mu-user-cell">
                                   <div className="mu-avatar">{initial}</div>
-
                                   <div>
                                     <p className="mu-user-name">{displayName}</p>
                                     <p className="mu-user-id">ID: {u._id || "N/A"}</p>
@@ -140,13 +177,17 @@ const ManageUsersPage = () => {
                               </td>
 
                               <td>
-                                <span className="mu-email">{u.email || "No email"}</span>
+                                <span className="mu-email">
+                                  {u.email || "No email"}
+                                </span>
                               </td>
 
                               <td>
                                 <span
                                   className={`mu-role ${
-                                    role === "admin" ? "mu-role-admin" : "mu-role-user"
+                                    role === "admin"
+                                      ? "mu-role-admin"
+                                      : "mu-role-user"
                                   }`}
                                 >
                                   {role}
@@ -154,11 +195,26 @@ const ManageUsersPage = () => {
                               </td>
 
                               <td className="mu-right">
-                                <div className="mu-actions">
-                                  <button className="mu-edit">Edit Role</button>
-                                  <button className="mu-delete">Delete</button>
-                                </div>
-                              </td>
+                            <div className="mu-actions">
+
+                             <button
+                             type="button"
+                             className="mu-edit"
+                             onClick={() => handleRoleChange(u._id, role)}
+                             >
+                            {role === "admin" ? "Make User" : "Make Admin"}
+                            </button>
+
+                            <button
+                            type="button"
+                            className="mu-delete"
+                          onClick={() => handleDelete(u._id)}
+                           >
+                          Delete
+                         </button>
+
+                        </div>
+                      </td>
                             </tr>
                           );
                         })}
@@ -175,16 +231,21 @@ const ManageUsersPage = () => {
   );
 };
 
-const STYLES = `
+const STYLES = (darkMode) => `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
 
   .mu-root {
     display: flex;
     min-height: 100svh;
-    background: #050810;
+    background: ${
+      darkMode
+        ? "#050810"
+        : "linear-gradient(135deg, #fff7ed 0%, #f8fafc 48%, #eef9ff 100%)"
+    };
     font-family: 'DM Sans', system-ui, sans-serif;
     position: relative;
     overflow-x: hidden;
+    color: ${darkMode ? "#f8fafc" : "#0f172a"};
   }
 
   .mu-glow {
@@ -217,8 +278,8 @@ const STYLES = `
     z-index: 0;
     pointer-events: none;
     background-image:
-      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      linear-gradient(${darkMode ? "rgba(255,255,255,0.018)" : "rgba(15,23,42,0.025)"} 1px, transparent 1px),
+      linear-gradient(90deg, ${darkMode ? "rgba(255,255,255,0.018)" : "rgba(15,23,42,0.025)"} 1px, transparent 1px);
     background-size: 52px 52px;
     mask-image: radial-gradient(circle at center, black, transparent 75%);
   }
@@ -258,22 +319,24 @@ const STYLES = `
   .mu-error-card,
   .mu-empty-card {
     border-radius: 28px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.04);
+    border: 1px solid ${
+      darkMode ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)"
+    };
+    background: ${
+      darkMode ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.78)"
+    };
     backdrop-filter: blur(24px);
-    box-shadow: 0 26px 70px rgba(0,0,0,0.25);
+    box-shadow: ${
+      darkMode
+        ? "0 26px 70px rgba(0,0,0,0.25)"
+        : "0 24px 60px rgba(15,23,42,0.09)"
+    };
     animation: muFadeUp 0.55s ease both;
   }
 
   @keyframes muFadeUp {
-    from {
-      opacity: 0;
-      transform: translateY(14px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .mu-hero {
@@ -322,7 +385,7 @@ const STYLES = `
     font-weight: 950;
     letter-spacing: 0.24em;
     text-transform: uppercase;
-    color: #fbbf24;
+    color: #f59e0b;
     margin-bottom: 10px;
   }
 
@@ -331,7 +394,7 @@ const STYLES = `
     font-weight: 950;
     line-height: 1.04;
     letter-spacing: -0.055em;
-    color: rgba(255,255,255,0.96);
+    color: ${darkMode ? "rgba(255,255,255,0.96)" : "#0f172a"};
     margin-bottom: 14px;
   }
 
@@ -345,7 +408,7 @@ const STYLES = `
     max-width: 680px;
     font-size: 14px;
     line-height: 1.75;
-    color: rgba(255,255,255,0.44);
+    color: ${darkMode ? "rgba(255,255,255,0.44)" : "rgba(15,23,42,0.56)"};
     font-weight: 550;
     margin-bottom: 20px;
   }
@@ -359,9 +422,11 @@ const STYLES = `
   .mu-pills span {
     padding: 7px 14px;
     border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.09);
-    background: rgba(255,255,255,0.055);
-    color: rgba(255,255,255,0.62);
+    border: 1px solid ${
+      darkMode ? "rgba(255,255,255,0.09)" : "rgba(15,23,42,0.08)"
+    };
+    background: ${darkMode ? "rgba(255,255,255,0.055)" : "rgba(15,23,42,0.045)"};
+    color: ${darkMode ? "rgba(255,255,255,0.62)" : "rgba(15,23,42,0.62)"};
     font-size: 11.5px;
     font-weight: 800;
   }
@@ -403,20 +468,18 @@ const STYLES = `
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    border: 3px solid rgba(255,255,255,0.09);
+    border: 3px solid ${darkMode ? "rgba(255,255,255,0.09)" : "rgba(15,23,42,0.1)"};
     border-top-color: #f59e0b;
     animation: muSpin 0.75s linear infinite;
   }
 
   @keyframes muSpin {
-    to {
-      transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
   }
 
   .mu-state-card p,
   .mu-empty-card p {
-    color: rgba(255,255,255,0.4);
+    color: ${darkMode ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.55)"};
     font-weight: 700;
     font-size: 13px;
   }
@@ -444,15 +507,15 @@ const STYLES = `
   }
 
   .mu-empty-icon {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.09);
+    background: ${darkMode ? "rgba(255,255,255,0.06)" : "rgba(15,23,42,0.045)"};
+    border: 1px solid ${darkMode ? "rgba(255,255,255,0.09)" : "rgba(15,23,42,0.08)"};
   }
 
   .mu-error-card h3,
   .mu-empty-card h3 {
     font-size: 17px;
     font-weight: 950;
-    color: rgba(255,255,255,0.9);
+    color: ${darkMode ? "rgba(255,255,255,0.9)" : "#0f172a"};
   }
 
   .mu-error-card p {
@@ -488,7 +551,7 @@ const STYLES = `
   .mu-table-header h2 {
     font-size: 22px;
     font-weight: 950;
-    color: rgba(255,255,255,0.92);
+    color: ${darkMode ? "rgba(255,255,255,0.92)" : "#0f172a"};
     letter-spacing: -0.03em;
   }
 
@@ -505,7 +568,9 @@ const STYLES = `
   .mu-table-wrap {
     overflow-x: auto;
     border-radius: 18px;
-    border: 1px solid rgba(255,255,255,0.07);
+    border: 1px solid ${
+      darkMode ? "rgba(255,255,255,0.07)" : "rgba(15,23,42,0.08)"
+    };
   }
 
   .mu-table {
@@ -515,7 +580,7 @@ const STYLES = `
   }
 
   .mu-table thead {
-    background: rgba(255,255,255,0.055);
+    background: ${darkMode ? "rgba(255,255,255,0.055)" : "rgba(15,23,42,0.045)"};
   }
 
   .mu-table th {
@@ -525,12 +590,14 @@ const STYLES = `
     font-weight: 950;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.34);
+    color: ${darkMode ? "rgba(255,255,255,0.34)" : "rgba(15,23,42,0.5)"};
   }
 
   .mu-table td {
     padding: 15px 16px;
-    border-top: 1px solid rgba(255,255,255,0.055);
+    border-top: 1px solid ${
+      darkMode ? "rgba(255,255,255,0.055)" : "rgba(15,23,42,0.06)"
+    };
     vertical-align: middle;
   }
 
@@ -539,7 +606,7 @@ const STYLES = `
   }
 
   .mu-table tbody tr:hover {
-    background: rgba(255,255,255,0.045);
+    background: ${darkMode ? "rgba(255,255,255,0.045)" : "rgba(15,23,42,0.035)"};
   }
 
   .mu-right {
@@ -568,7 +635,7 @@ const STYLES = `
   .mu-user-name {
     font-size: 13.5px;
     font-weight: 900;
-    color: rgba(255,255,255,0.86);
+    color: ${darkMode ? "rgba(255,255,255,0.86)" : "#0f172a"};
     margin-bottom: 3px;
     max-width: 220px;
     overflow: hidden;
@@ -578,7 +645,7 @@ const STYLES = `
 
   .mu-user-id {
     font-size: 10.5px;
-    color: rgba(255,255,255,0.26);
+    color: ${darkMode ? "rgba(255,255,255,0.26)" : "rgba(15,23,42,0.42)"};
     font-family: monospace;
     max-width: 220px;
     overflow: hidden;
@@ -588,7 +655,7 @@ const STYLES = `
 
   .mu-email {
     font-size: 13px;
-    color: rgba(255,255,255,0.46);
+    color: ${darkMode ? "rgba(255,255,255,0.46)" : "rgba(15,23,42,0.6)"};
     font-weight: 650;
   }
 
@@ -610,9 +677,9 @@ const STYLES = `
   }
 
   .mu-role-user {
-    color: rgba(255,255,255,0.48);
-    background: rgba(255,255,255,0.06);
-    border-color: rgba(255,255,255,0.1);
+    color: ${darkMode ? "rgba(255,255,255,0.48)" : "rgba(15,23,42,0.58)"};
+    background: ${darkMode ? "rgba(255,255,255,0.06)" : "rgba(15,23,42,0.045)"};
+    border-color: ${darkMode ? "rgba(255,255,255,0.1)" : "rgba(15,23,42,0.08)"};
   }
 
   .mu-actions {
@@ -672,5 +739,4 @@ const STYLES = `
     }
   }
 `;
-
 export default ManageUsersPage;

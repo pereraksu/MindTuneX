@@ -499,6 +499,72 @@ const contactRiskUser = async (req, res) => {
   }
 };
 
+const deleteUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    if (String(req.user._id) === String(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot delete your own admin account",
+      });
+    }
+
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    await MoodEntry.deleteMany({ user: userId });
+
+    return res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+      data: deletedUser,
+    });
+  } catch (error) {
+    return sendError(res, "Delete user failed", error);
+  }
+};
+
+const updateUserRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+
+    if (!["admin", "user"].includes(String(role).toLowerCase())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role. Role must be admin or user",
+      });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      { role: String(role).toLowerCase() },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User role updated successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    return sendError(res, "Update user role failed", error);
+  }
+};
+
 module.exports = {
   getAdminSummary,
   getAdminUsers,
@@ -508,4 +574,6 @@ module.exports = {
   getChatbotStats,
   markAlertReviewed,
   contactRiskUser,
+  deleteUser,
+  updateUserRole,
 };

@@ -9,6 +9,11 @@ const {
   getChatbotStats,
   markAlertReviewed,
   contactRiskUser,
+
+  // ✅ ADD THESE
+  deleteUser,
+  updateUserRole,
+
 } = require("../controllers/adminController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -28,13 +33,19 @@ router.get("/chatbot-stats", getChatbotStats);
 router.get("/users", getAdminUsers);
 router.get("/support-users", getSupportUsers);
 
+// ✅ UPDATE USER ROLE
+router.put("/users/:id/role", updateUserRole);
+
+// ✅ DELETE USER
+router.delete("/users/:id", deleteUser);
+
 // Risk Monitoring
 router.get("/high-risk", getHighRiskEntries);
 
-// ✅ Mark Alert As Reviewed
+// Mark Alert As Reviewed
 router.patch("/alerts/:id/review", markAlertReviewed);
 
-// 📩 Contact Risk User
+// Contact Risk User
 router.post("/alerts/:id/contact", contactRiskUser);
 
 // Health Check
