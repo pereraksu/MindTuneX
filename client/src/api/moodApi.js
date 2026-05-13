@@ -1,8 +1,6 @@
 import axios from "axios";
 
-// ======================================================
 // MOOD API INSTANCE
-// ======================================================
 
 const API = axios.create({
   baseURL:
@@ -16,10 +14,8 @@ const API = axios.create({
   },
 });
 
-// ======================================================
 // REQUEST INTERCEPTOR
 // Auto Attach JWT Token
-// ======================================================
 
 API.interceptors.request.use(
   (config) => {
@@ -38,10 +34,8 @@ API.interceptors.request.use(
   }
 );
 
-// ======================================================
 // RESPONSE INTERCEPTOR
 // Global Error Handling
-// ======================================================
 
 API.interceptors.response.use(
   (response) => response,

@@ -19,9 +19,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_DIR = os.path.join(BASE_DIR, "saved_model")
 INFERENCE_META_PATH = os.path.join(MODEL_DIR, "inference_meta.json")
 
-# ------------------------------------------------------------
 # Load inference metadata
-# ------------------------------------------------------------
+
 try:
     with open(INFERENCE_META_PATH, "r", encoding="utf-8") as f:
         INFERENCE_META = json.load(f)
@@ -69,10 +68,7 @@ EMOTION_POLARITY = {
     "sadness": -0.8,
 }
 
-
-# ------------------------------------------------------------
 # Text cleaning
-# ------------------------------------------------------------
 def clean_text(text: str) -> str:
     text = str(text).lower().strip()
     text = re.sub(r"http\S+|www\S+", "", text)
@@ -86,9 +82,7 @@ def clean_text(text: str) -> str:
     return text
 
 
-# ------------------------------------------------------------
 # Utility helpers
-# ------------------------------------------------------------
 def get_confidence_level(confidence: float) -> str:
     if confidence >= 0.75:
         return "high"
@@ -156,10 +150,8 @@ def extract_trigger_category(text: str) -> str:
     return "general"
 
 
-# ------------------------------------------------------------
 # Safe post-processing rules
 # Model prediction first, rules only for edge cases
-# ------------------------------------------------------------
 def apply_post_rules(text: str, pred: str, confidence: float) -> str:
     text_lower = text.lower()
 
@@ -223,9 +215,7 @@ def apply_post_rules(text: str, pred: str, confidence: float) -> str:
     return pred
 
 
-# ------------------------------------------------------------
 # Main prediction
-# ------------------------------------------------------------
 def predict_emotion(text: str) -> Dict:
     text_clean = clean_text(text)
 

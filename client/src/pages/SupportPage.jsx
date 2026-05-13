@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
+import Footer from "../components/common/Footer";
 import SupportResponseCard from "../components/support/SupportResponseCard";
 import RecommendationCard from "../components/support/RecommendationCard";
 import { getSupportApi } from "../api/supportApi";
@@ -225,6 +226,10 @@ const SupportPage = () => {
                 </section>
               )}
             </div>
+
+            <div className="sp-footer-wrap">
+              <Footer />
+            </div>
           </main>
         </div>
       </div>
@@ -300,6 +305,12 @@ const STYLES = (darkMode) => `
     display: flex;
     flex-direction: column;
     gap: 22px;
+  }
+
+  .sp-footer-wrap { 
+    width: 100%;
+    max-width: 1080px;
+    margin:46px auto 0;
   }
 
   .sp-hero,

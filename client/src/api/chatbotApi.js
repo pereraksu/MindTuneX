@@ -1,8 +1,6 @@
 import axios from "axios";
 
-// ======================================================
 // CHATBOT API INSTANCE
-// ======================================================
 
 const API = axios.create({
   baseURL:
@@ -15,11 +13,8 @@ const API = axios.create({
     "Content-Type": "application/json",
   },
 });
-
-// ======================================================
 // REQUEST INTERCEPTOR
 // Auto Attach JWT Token
-// ======================================================
 
 API.interceptors.request.use(
   (config) => {
@@ -38,18 +33,14 @@ API.interceptors.request.use(
   }
 );
 
-// ======================================================
 // RESPONSE INTERCEPTOR
 // Global Error Handling
-// ======================================================
 
 API.interceptors.response.use(
   (response) => response,
 
   (error) => {
-    // ==========================
     // Unauthorized
-    // ==========================
     if (error.response?.status === 401) {
       console.warn("⚠️ Session expired.");
 
@@ -61,30 +52,22 @@ API.interceptors.response.use(
       }
     }
 
-    // ==========================
     // Forbidden
-    // ==========================
     else if (error.response?.status === 403) {
       console.warn("⛔ Access denied.");
     }
 
-    // ==========================
     // Server Error
-    // ==========================
     else if (error.response?.status >= 500) {
       console.error("🔥 Chatbot Server Error:", error.response?.data);
     }
 
-    // ==========================
     // Timeout
-    // ==========================
     else if (error.code === "ECONNABORTED") {
       console.error("⌛ Chatbot request timeout.");
     }
 
-    // ==========================
     // Network Error
-    // ==========================
     else if (!error.response) {
       console.error("🌐 Network Error.");
     }
@@ -93,15 +76,11 @@ API.interceptors.response.use(
   }
 );
 
-// ======================================================
 // HELPER FUNCTION
-// ======================================================
 
 const handleResponse = (response) => response.data;
 
-// ======================================================
 // CHATBOT API FUNCTIONS
-// ======================================================
 
 // Send Message
 export const sendChatMessageApi = async (payload) => {
@@ -120,9 +99,6 @@ export const clearChatHistoryApi = async () => {
   const response = await API.delete("/clear");
   return handleResponse(response);
 };
-
-// ======================================================
 // EXPORT INSTANCE
-// ======================================================
 
 export default API;

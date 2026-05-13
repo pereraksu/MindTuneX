@@ -1,8 +1,5 @@
 import axios from "axios";
-
-// ======================================================
 // INSIGHTS API INSTANCE
-// ======================================================
 
 const API = axios.create({
   baseURL:
@@ -16,10 +13,8 @@ const API = axios.create({
   },
 });
 
-// ======================================================
 // REQUEST INTERCEPTOR
 // Auto Attach JWT Token
-// ======================================================
 
 API.interceptors.request.use(
   (config) => {
@@ -37,19 +32,14 @@ API.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-
-// ======================================================
 // RESPONSE INTERCEPTOR
 // Global Error Handling
-// ======================================================
 
 API.interceptors.response.use(
   (response) => response,
 
   (error) => {
-    // ==========================
     // Unauthorized
-    // ==========================
     if (error.response?.status === 401) {
       console.warn("⚠️ Session expired.");
 
@@ -61,30 +51,22 @@ API.interceptors.response.use(
       }
     }
 
-    // ==========================
     // Forbidden
-    // ==========================
     else if (error.response?.status === 403) {
       console.warn("⛔ Access denied.");
     }
 
-    // ==========================
     // Server Error
-    // ==========================
     else if (error.response?.status >= 500) {
       console.error("🔥 Insights Server Error:", error.response?.data);
     }
 
-    // ==========================
     // Timeout
-    // ==========================
     else if (error.code === "ECONNABORTED") {
       console.error("⌛ Insights request timeout.");
     }
 
-    // ==========================
     // Network Error
-    // ==========================
     else if (!error.response) {
       console.error("🌐 Network Error.");
     }
@@ -93,15 +75,11 @@ API.interceptors.response.use(
   }
 );
 
-// ======================================================
 // HELPER
-// ======================================================
 
 const handleResponse = (response) => response.data;
 
-// ======================================================
 // INSIGHTS API FUNCTIONS
-// ======================================================
 
 // Weekly Insights
 export const getWeeklyInsightsApi = async () => {
@@ -127,8 +105,6 @@ export const getWellnessScoreApi = async () => {
   return handleResponse(response);
 };
 
-// ======================================================
 // EXPORT INSTANCE
-// ======================================================
 
 export default API;

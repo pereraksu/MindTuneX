@@ -4,6 +4,9 @@ import Home from "./pages/Home";
 // Public Pages
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import PrivacyConsentPage from "./pages/PrivacyConsentPage";
+import AboutMindTuneXPage from "./pages/AboutMindTuneXPage";
+
 
 // User Pages
 import DashboardPage from "./pages/DashboardPage";
@@ -13,11 +16,13 @@ import MoodAnalysis from "./pages/MoodAnalysis";
 import ReportsPage from "./pages/ReportsPage";
 import ChatbotPage from "./pages/ChatbotPage";
 
+
 // Admin Pages
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ManageUsersPage from "./pages/ManageUsersPage";
 import RiskAlertsPage from "./pages/RiskAlertsPage";
 import SystemReportsPage from "./pages/SystemReportsPage";
+import AuditLogsPage from "./pages/AuditLogsPage";
 
 // User Feature Pages
 import MoodHistory from "./components/mood/MoodHistory";
@@ -148,6 +153,24 @@ function App() {
         }
       />
 
+      <Route
+        path="/privacy-consent"
+        element={
+          <ProtectRoute>
+            <PrivacyConsentPage />
+          </ProtectRoute>
+        }
+      />
+
+      <Route
+        path="/about-mindtunex"
+        element={
+          <ProtectRoute>
+            <AboutMindTuneXPage />
+          </ProtectRoute>
+        }
+      />
+
       {/* Admin Routes */}
       <Route
         path="/admin/dashboard"
@@ -184,6 +207,14 @@ function App() {
           </AdminRoute>
         }
       />
+      <Route
+  path="/admin/audit-logs"
+  element={
+    <AdminRoute>
+      <AuditLogsPage />
+    </AdminRoute>
+  }
+/>
 
       {/* Redirects */}
       <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

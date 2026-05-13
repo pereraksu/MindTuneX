@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/useTheme";
 import { getMyMoodsApi } from "../api/moodApi";
 import { getWeeklyInsightsApi } from "../api/insightApi";
+import Footer from "../components/common/Footer";
 
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
@@ -407,6 +408,10 @@ const DashboardPage = () => {
                 </div>
               </div>
             </div>
+
+            <div className="dash-footer-wrap">
+              <Footer />
+            </div>
           </main>
         </div>
       </div>
@@ -544,11 +549,22 @@ const STYLES = (darkMode) => `
   }
 
   .dash-container {
+    width: 100%;
     max-width: 1280px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: 26px;
+  }
+
+  .dash-footer-wrap {
+    width: 100%;
+    max-width: 1280px;
+    margin: 52px auto 0;
+  }
+
+  .dash-footer-wrap .mtx-footer {
+    margin-top: 0;
   }
 
   .page-header,

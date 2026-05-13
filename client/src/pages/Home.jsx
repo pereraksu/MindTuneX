@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import MindTuneXLogo from "../components/common/MindTuneXLogo";
+import Footer from "../components/common/Footer";
+import { useTheme } from "../context/useTheme";
 
 const Counter = ({ end, suffix = "" }) => {
   const [count, setCount] = useState(0);
@@ -114,9 +116,11 @@ const StatCard = ({ value, suffix, label }) => (
 );
 
 export default function Home() {
+  const { darkMode } = useTheme();
+
   return (
     <>
-      <style>{HOME_STYLES}</style>
+      <style>{HOME_STYLES(darkMode)}</style>
 
       <div className="home-root">
         <div className="home-glow home-glow-1" />
@@ -128,13 +132,27 @@ export default function Home() {
           <MindTuneXLogo />
 
           <div className="home-nav-links">
-            <Link to="/login" className="home-nav-link">
-              Sign In
-            </Link>
-            <Link to="/register" className="home-nav-cta">
-              Get Started
-            </Link>
-          </div>
+  <Link to="/" className="home-nav-link">
+    Home
+  </Link>
+
+  <Link to="/about-mindtunex" className="home-nav-link">
+    About
+  </Link>
+
+  <Link to="/privacy-consent" className="home-nav-link">
+    Privacy
+  </Link>
+
+  <Link to="/login" className="home-nav-link">
+    Sign In
+  </Link>
+
+  <Link to="/register" className="home-nav-cta">
+    Get Started
+  </Link>
+</div>
+
         </nav>
 
         <section className="home-hero">
@@ -176,7 +194,7 @@ export default function Home() {
             <div className="home-stats-card">
               <div className="home-stats-grid">
                 <StatCard value={12} suffix="+" label="Emotion Classes" />
-                <StatCard value={83} suffix="%" label="Macro F1 Score" />
+                <StatCard value={80} suffix="%" label="Macro F1 Score" />
                 <StatCard value={3} suffix="+" label="Core Datasets" />
                 <StatCard value={24} suffix="/7" label="Support Access" />
               </div>
@@ -319,34 +337,27 @@ export default function Home() {
           </div>
         </section>
 
-        <footer className="home-footer">
-          <div className="home-footer-inner">
-            <MindTuneXLogo />
-
-            <p className="home-footer-copy">
-              © 2026 MindTuneX · Emotion-Aware Support · BSc Computer Science FYP
-            </p>
-
-            <div className="home-footer-links">
-              <Link to="/login">Login</Link>
-              <Link to="/register">Register</Link>
-            </div>
-          </div>
-        </footer>
+        <div className="home-footer-wrap">
+          <Footer />
+        </div>
       </div>
     </>
   );
 }
 
-const HOME_STYLES = `
+const HOME_STYLES = (darkMode) => `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800;900&display=swap');
 
   .home-root {
     position: relative;
     min-height: 100svh;
     overflow-x: hidden;
-    background: #050810;
-    color: #fff;
+    background: ${
+      darkMode
+        ? "#050810"
+        : "linear-gradient(135deg, #ecfeff 0%, #f8fafc 48%, #eef9ff 100%)"
+    };
+    color: ${darkMode ? "#fff" : "#0f172a"};
     font-family: 'DM Sans', system-ui, sans-serif;
   }
 
@@ -998,50 +1009,12 @@ const HOME_STYLES = `
     font-weight: 550;
   }
 
-  .home-footer {
+  .home-footer-wrap {
     position: relative;
     z-index: 1;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    padding: 28px 32px;
-    background: rgba(5,8,16,0.72);
-  }
-
-  .home-footer-inner {
     max-width: 1160px;
     margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-  }
-
-  @media (min-width: 768px) {
-    .home-footer-inner {
-      flex-direction: row;
-      justify-content: space-between;
-    }
-  }
-
-  .home-footer-copy {
-    font-size: 12px;
-    color: rgba(255,255,255,0.25);
-    text-align: center;
-  }
-
-  .home-footer-links {
-    display: flex;
-    gap: 22px;
-  }
-
-  .home-footer-links a {
-    font-size: 12px;
-    color: rgba(255,255,255,0.3);
-    text-decoration: none;
-    font-weight: 700;
-  }
-
-  .home-footer-links a:hover {
-    color: rgba(255,255,255,0.7);
+    padding: 0 24px 34px;
   }
 
   @media (max-width: 640px) {
@@ -1063,6 +1036,10 @@ const HOME_STYLES = `
 
     .home-section {
       padding: 64px 18px;
+    }
+
+    .home-footer-wrap {
+      padding: 0 18px 28px;
     }
   }
 `;

@@ -14,16 +14,30 @@ const RegisterPage = () => {
     email: "",
     password: "",
   });
+
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+  const isPasswordValid = passwordRegex.test(formData.password);
+
   const handleChange = (e) =>
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!isPasswordValid) {
+      setError(
+        "Password must be at least 8 characters and include uppercase, lowercase, and a number."
+      );
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -40,12 +54,10 @@ const RegisterPage = () => {
   };
 
   const strength =
-    formData.password.length < 4
-      ? "Too short"
-      : formData.password.length < 6
-      ? "Weak"
-      : formData.password.length < 8
-      ? "Fair"
+    formData.password.length === 0
+      ? ""
+      : !isPasswordValid
+      ? "Needs uppercase, lowercase & number"
       : "Strong";
 
   return (
@@ -102,7 +114,7 @@ const RegisterPage = () => {
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
-                    placeholder="Create a password"
+                    placeholder="Create a strong password"
                     value={formData.password}
                     onChange={handleChange}
                     required
@@ -117,6 +129,10 @@ const RegisterPage = () => {
                     {showPassword ? "🙈" : "👁️"}
                   </button>
                 </div>
+
+                <p className="rg-password-hint">
+                  Must be 8+ characters with uppercase, lowercase & number.
+                </p>
               </div>
 
               {formData.password.length > 0 && (
@@ -128,14 +144,11 @@ const RegisterPage = () => {
                         className="rg-strength-bar"
                         style={{
                           background:
-                            formData.password.length >= i * 2
-                              ? i === 1
-                                ? "#f43f5e"
-                                : i === 2
-                                ? "#f97316"
-                                : i === 3
-                                ? "#f59e0b"
-                                : "#10b981"
+                            isPasswordValid && formData.password.length >= i * 2
+                              ? "#10b981"
+                              : !isPasswordValid &&
+                                formData.password.length >= i * 2
+                              ? "#f97316"
                               : darkMode
                               ? "rgba(255,255,255,0.08)"
                               : "rgba(15,23,42,0.1)",
@@ -143,7 +156,13 @@ const RegisterPage = () => {
                       />
                     ))}
                   </div>
-                  <span className="rg-strength-label">{strength}</span>
+                  <span
+                    className={`rg-strength-label ${
+                      isPasswordValid ? "valid" : "invalid"
+                    }`}
+                  >
+                    {strength}
+                  </span>
                 </div>
               )}
 
@@ -373,6 +392,13 @@ const STYLES = (darkMode) => `
     opacity: 0.65;
   }
 
+  .rg-password-hint {
+    margin: -2px 0 0 3px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: ${darkMode ? "rgba(94,234,212,0.78)" : "rgba(13,148,136,0.85)"};
+  }
+
   .rg-strength {
     display: flex;
     align-items: center;
@@ -397,6 +423,14 @@ const STYLES = (darkMode) => `
     font-size: 11px;
     font-weight: 800;
     color: ${darkMode ? "rgba(255,255,255,0.38)" : "rgba(15,23,42,0.48)"};
+  }
+
+  .rg-strength-label.valid {
+    color: #10b981;
+  }
+
+  .rg-strength-label.invalid {
+    color: #f97316;
   }
 
   .rg-btn-submit {

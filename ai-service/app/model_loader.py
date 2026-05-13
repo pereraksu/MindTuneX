@@ -4,14 +4,14 @@ import torch
 import torch.nn as nn
 from transformers import AutoTokenizer, AutoModel
 
-# ─── File Path Setup ───
+# File Path Setup 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_DIR = os.path.join(BASE_DIR, "saved_model")
 
 CONFIG_PATH = os.path.join(MODEL_DIR, "config.json")
 WEIGHTS_PATH = os.path.join(MODEL_DIR, "model_weights.pt")
 
-# ─── Config Load ───
+# Config Load 
 with open(CONFIG_PATH, "r", encoding="utf-8") as f:
     CONFIG = json.load(f)
 
@@ -26,7 +26,7 @@ NUM_LABELS = CONFIG["num_labels"]
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# ─── Model Architecture ───
+# Model Architecture
 class MindTuneXClassifier(nn.Module):
     def __init__(self, base_model: str, num_labels: int, dropout: float = 0.3):
         super().__init__()
@@ -49,7 +49,7 @@ class MindTuneXClassifier(nn.Module):
         logits = self.classifier(cls_token)
         return logits
 
-# ─── Load Tokenizer & Model ───
+#Load Tokenizer & Model
 print(f"Loading MindTuneX AI Model on {DEVICE}...")
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)

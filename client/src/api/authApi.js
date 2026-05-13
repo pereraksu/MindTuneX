@@ -1,8 +1,6 @@
 import axios from "axios";
 
-// ======================================================
 // AUTH AXIOS INSTANCE
-// ======================================================
 
 const API = axios.create({
   baseURL:
@@ -15,11 +13,8 @@ const API = axios.create({
     "Content-Type": "application/json",
   },
 });
-
-// ======================================================
 // REQUEST INTERCEPTOR
 // Auto Attach JWT Token
-// ======================================================
 
 API.interceptors.request.use(
   (config) => {
@@ -34,10 +29,8 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ======================================================
 // RESPONSE INTERCEPTOR
 // Global Auth Error Handling
-// ======================================================
 
 API.interceptors.response.use(
   (response) => response,
@@ -55,16 +48,11 @@ API.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// ======================================================
 // HELPER
-// ======================================================
 
 const handleResponse = (response) => response.data;
 
-// ======================================================
 // AUTH API FUNCTIONS
-// ======================================================
 
 export const registerUserApi = async (userData) => {
   const response = await API.post("/register", userData);

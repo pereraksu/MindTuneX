@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
-import { getAdminUsersApi, updateUserRoleApi, deleteUserApi } from "../api/adminApi";
+import Footer from "../components/common/Footer";
+import {
+  getAdminUsersApi,
+  updateUserRoleApi,
+  deleteUserApi,
+} from "../api/adminApi";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/useTheme";
 
@@ -19,6 +24,7 @@ const ManageUsersPage = () => {
       setError("");
 
       const res = await getAdminUsersApi();
+
       const data = Array.isArray(res)
         ? res
         : Array.isArray(res?.data?.data)
@@ -37,33 +43,43 @@ const ManageUsersPage = () => {
   };
 
   const handleDelete = async (id) => {
-  if (!window.confirm("Are you sure you want to delete this user?")) return;
+    if (String(user?._id) === String(id)) {
+      alert("You cannot delete your own admin account.");
+      return;
+    }
 
-  try {
-    await deleteUserApi(id);
-    setUsers((prev) => prev.filter((u) => u._id !== id));
-  } catch (err) {
-    console.error("Delete failed:", err);
-    alert("Delete failed");
-  }
-};
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
 
-const handleRoleChange = async (id, currentRole) => {
-  const newRole = currentRole === "admin" ? "user" : "admin";
+    try {
+      await deleteUserApi(id);
+      setUsers((prev) => prev.filter((u) => u._id !== id));
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Delete failed");
+    }
+  };
 
-  try {
-    await updateUserRoleApi(id, newRole);
+  const handleRoleChange = async (id, currentRole) => {
+    const newRole = currentRole === "admin" ? "user" : "admin";
 
-    setUsers((prev) =>
-      prev.map((u) => (u._id === id ? { ...u, role: newRole } : u))
-    );
-  } catch (err) {
-    console.error("Role update failed:", err);
-    alert("Role update failed");
-  }
-};
+    try {
+      await updateUserRoleApi(id, newRole);
+
+      setUsers((prev) =>
+        prev.map((u) => (u._id === id ? { ...u, role: newRole } : u))
+      );
+    } catch (err) {
+      console.error("Role update failed:", err);
+      alert("Role update failed");
+    }
+  };
+
   useEffect(() => {
     loadUsers();
+
+    const interval = setInterval(loadUsers, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -101,6 +117,7 @@ const handleRoleChange = async (id, currentRole) => {
                     <div className="mu-pills">
                       <span>👑 Admin: {user?.fullName || "Administrator"}</span>
                       <span>👥 Total Users: {users.length}</span>
+                      <span>🔄 Auto refresh: 30s</span>
                     </div>
                   </div>
 
@@ -163,15 +180,25 @@ const handleRoleChange = async (id, currentRole) => {
                           const displayName = u.fullName || u.name || "N/A";
                           const role = (u.role || "user").toLowerCase();
                           const initial = displayName.charAt(0).toUpperCase();
+                          const isCurrentUser =
+                            String(user?._id) === String(u._id);
 
                           return (
                             <tr key={u._id || index}>
                               <td>
                                 <div className="mu-user-cell">
                                   <div className="mu-avatar">{initial}</div>
+
                                   <div>
-                                    <p className="mu-user-name">{displayName}</p>
-                                    <p className="mu-user-id">ID: {u._id || "N/A"}</p>
+                                    <p className="mu-user-name">
+                                      {displayName}
+                                      {isCurrentUser && (
+                                        <span className="mu-you-badge">You</span>
+                                      )}
+                                    </p>
+                                    <p className="mu-user-id">
+                                      ID: {u._id || "N/A"}
+                                    </p>
                                   </div>
                                 </div>
                               </td>
@@ -195,26 +222,30 @@ const handleRoleChange = async (id, currentRole) => {
                               </td>
 
                               <td className="mu-right">
-                            <div className="mu-actions">
+                                <div className="mu-actions">
+                                  <button
+                                    type="button"
+                                    className="mu-edit"
+                                    onClick={() =>
+                                      handleRoleChange(u._id, role)
+                                    }
+                                  >
+                                    {role === "admin"
+                                      ? "Make User"
+                                      : "Make Admin"}
+                                  </button>
 
-                             <button
-                             type="button"
-                             className="mu-edit"
-                             onClick={() => handleRoleChange(u._id, role)}
-                             >
-                            {role === "admin" ? "Make User" : "Make Admin"}
-                            </button>
-
-                            <button
-                            type="button"
-                            className="mu-delete"
-                          onClick={() => handleDelete(u._id)}
-                           >
-                          Delete
-                         </button>
-
-                        </div>
-                      </td>
+                                  {!isCurrentUser && (
+                                    <button
+                                      type="button"
+                                      className="mu-delete"
+                                      onClick={() => handleDelete(u._id)}
+                                    >
+                                      Delete
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
                             </tr>
                           );
                         })}
@@ -223,6 +254,10 @@ const handleRoleChange = async (id, currentRole) => {
                   </div>
                 </section>
               )}
+            </div>
+
+            <div className="mu-footer-wrap">
+              <Footer admin />
             </div>
           </main>
         </div>
@@ -239,7 +274,7 @@ const STYLES = (darkMode) => `
     min-height: 100svh;
     background: ${
       darkMode
-        ? "#050810"
+        ? "radial-gradient(circle at top left, rgba(245,158,11,0.1), transparent 34%), #080c14"
         : "linear-gradient(135deg, #fff7ed 0%, #f8fafc 48%, #eef9ff 100%)"
     };
     font-family: 'DM Sans', system-ui, sans-serif;
@@ -323,7 +358,7 @@ const STYLES = (darkMode) => `
       darkMode ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)"
     };
     background: ${
-      darkMode ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.78)"
+      darkMode ? "rgba(15,23,42,0.74)" : "rgba(255,255,255,0.78)"
     };
     backdrop-filter: blur(24px);
     box-shadow: ${
@@ -637,17 +672,30 @@ const STYLES = (darkMode) => `
     font-weight: 900;
     color: ${darkMode ? "rgba(255,255,255,0.86)" : "#0f172a"};
     margin-bottom: 3px;
-    max-width: 220px;
+    max-width: 240px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .mu-you-badge {
+    display: inline-flex;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(34,197,94,0.12);
+    border: 1px solid rgba(34,197,94,0.28);
+    color: #22c55e;
+    font-size: 10px;
+    font-weight: 950;
+    vertical-align: middle;
   }
 
   .mu-user-id {
     font-size: 10.5px;
     color: ${darkMode ? "rgba(255,255,255,0.26)" : "rgba(15,23,42,0.42)"};
     font-family: monospace;
-    max-width: 220px;
+    max-width: 240px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -719,6 +767,12 @@ const STYLES = (darkMode) => `
     background: rgba(244,63,94,0.18);
   }
 
+  .mu-footer-wrap {
+    width: 100%;
+    max-width: 1280px;
+    margin: 64px auto 24px;
+  }
+
   @media (max-width: 640px) {
     .mu-main {
       padding: 24px 16px;
@@ -739,4 +793,5 @@ const STYLES = (darkMode) => `
     }
   }
 `;
+
 export default ManageUsersPage;

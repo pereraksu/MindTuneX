@@ -4,6 +4,7 @@ import "regenerator-runtime/runtime";
 
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
+import Footer from "../components/common/Footer";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/useTheme";
 import { predictMoodApi, saveMoodApi } from "../api/moodApi";
@@ -286,6 +287,10 @@ function MoodAnalysis() {
               </div>
 
               {result && <ResultPanel result={result} support={support} />}
+
+              <div className="ma-footer-wrap">
+                <Footer />
+              </div>
             </div>
           </main>
         </div>
@@ -545,6 +550,11 @@ const PAGE_STYLES = (darkMode) => `
     flex-direction: column;
     gap: 24px;
   }
+
+  .ma-footer-wrap {
+  width; 100%;
+  max-width: 920px;
+  margin: 46px auto 0;}
 
   .ma-header,
   .ma-input-card,

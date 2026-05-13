@@ -1,8 +1,5 @@
 import axios from "axios";
-
-// ======================================================
 // AXIOS INSTANCE
-// ======================================================
 
 const API = axios.create({
   baseURL:
@@ -16,10 +13,8 @@ const API = axios.create({
   },
 });
 
-// ======================================================
 // REQUEST INTERCEPTOR
 // Auto Attach JWT Token
-// ======================================================
 
 API.interceptors.request.use(
   (config) => {
@@ -38,18 +33,14 @@ API.interceptors.request.use(
   }
 );
 
-// ======================================================
 // RESPONSE INTERCEPTOR
 // Global Error Handling
-// ======================================================
 
 API.interceptors.response.use(
   (response) => response,
 
   (error) => {
-    // ==========================
     // Unauthorized
-    // ==========================
     if (error.response?.status === 401) {
       console.warn("⚠️ Session expired.");
 
@@ -59,23 +50,17 @@ API.interceptors.response.use(
       window.location.href = "/login";
     }
 
-    // ==========================
     // Forbidden
-    // ==========================
     else if (error.response?.status === 403) {
       console.warn("⛔ Access denied.");
     }
 
-    // ==========================
     // Server Error
-    // ==========================
     else if (error.response?.status >= 500) {
       console.error("🔥 Server Error:", error.response?.data);
     }
 
-    // ==========================
     // Network Error
-    // ==========================
     else if (error.code === "ECONNABORTED") {
       console.error("⌛ Request timeout.");
     }
@@ -88,9 +73,7 @@ API.interceptors.response.use(
   }
 );
 
-// ======================================================
 // GENERIC GET REQUEST HELPER
-// ======================================================
 
 const fetchData = async (endpoint) => {
   try {
@@ -102,39 +85,36 @@ const fetchData = async (endpoint) => {
   }
 };
 
-// ======================================================
-// ADMIN API FUNCTIONS
-// ======================================================
+// ADMIN SUMMARY
 
 export const getAdminSummaryApi = () =>
   fetchData("/summary");
 
+// ADMIN USERS
+
 export const getAdminUsersApi = () =>
   fetchData("/users");
+
+// HIGH RISK ENTRIES
 
 export const getHighRiskEntriesApi = () =>
   fetchData("/high-risk");
 
+// SUPPORT USERS
+
 export const getSupportUsersApi = () =>
   fetchData("/support-users");
+// SYSTEM STATUS
 
 export const getSystemStatusApi = () =>
   fetchData("/system-status");
 
-// ======================================================
 // CHATBOT STATS
-// ======================================================
 
 export const getChatbotStatsApi = () =>
   fetchData("/chatbot-stats");
 
-// ======================================================
-// EXPORT INSTANCE (optional)
-// ======================================================
-
-// ======================================================
 // RISK ALERT ACTIONS
-// ======================================================
 
 export const markReviewedApi = async (id) => {
   const res = await API.patch(`/alerts/${id}/review`);
@@ -146,14 +126,28 @@ export const contactUserApi = async (id) => {
   return res.data;
 };
 
+// USER MANAGEMENT
+
 export const deleteUserApi = async (id) => {
   const res = await API.delete(`/users/${id}`);
   return res.data;
 };
 
 export const updateUserRoleApi = async (id, role) => {
-  const res = await API.put(`/users/${id}/role`, { role });
+  const res = await API.put(`/users/${id}/role`, {
+    role,
+  });
+
   return res.data;
 };
+
+// AUDIT LOGS
+
+export const getAuditLogsApi = async () => {
+  const res = await API.get("/audit-logs");
+  return res.data;
+};
+
+// EXPORT INSTANCE
 
 export default API;

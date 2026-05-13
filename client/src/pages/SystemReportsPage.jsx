@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
+import Footer from "../components/common/Footer";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/useTheme";
 import {
@@ -472,6 +473,9 @@ const SystemReportsPage = () => {
                 </div>
               )}
             </div>
+            <div className="sr-footer-wrap">
+              <Footer admin />
+            </div>
           </main>
         </div>
       </div>
@@ -592,6 +596,12 @@ const STYLES = (darkMode) => `
     flex-direction: column;
     gap: 22px;
   }
+
+  .sr-footer-wrap {
+  width: 100%;
+  max-width: 1220px;
+  margin: 64px auto 24px;
+}
 
   .sr-hero,
   .sr-card,

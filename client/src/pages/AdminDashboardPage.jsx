@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
+import Footer from "../components/common/Footer";
 import AdminStatsCards from "../components/admin/AdminStatsCards";
 import AdminUserTable from "../components/admin/AdminUserTable";
 import HighRiskEntries from "../components/admin/HighRiskEntries";
@@ -481,6 +482,11 @@ const AdminDashboardPage = () => {
                 </div>
               )}
             </div>
+            <div className="ad-container">
+            </div>
+            <div className="ad-footer-wrap">
+              <Footer admin/>
+            </div>
           </main>
         </div>
       </div>
@@ -561,6 +567,11 @@ const STYLES = (darkMode) => `
     flex-direction: column;
     gap: 24px;
   }
+    .ad-footer-wrap {
+  width: 100%;
+  max-width: 1280px;
+  margin: 64px auto 24px;
+}
 
   .ad-hero,
   .ad-metric-card,

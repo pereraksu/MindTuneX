@@ -1,5 +1,6 @@
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
+import Footer from "../components/common/Footer";
 import JournalForm from "../components/journal/JournalForm";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/useTheme";
@@ -59,9 +60,9 @@ const JournalPage = () => {
                   </h1>
 
                   <p className="jp-subtitle">
-                    Express your thoughts and feelings in a private space. MindTuneX
-                    analyses your journal entry to detect emotional signals, mood
-                    patterns, and personalised support needs.
+                    Express your thoughts and feelings in a private space.
+                    MindTuneX analyses your journal entry to detect emotional
+                    signals, mood patterns, and personalised support needs.
                   </p>
 
                   <div className="jp-pills">
@@ -95,6 +96,10 @@ const JournalPage = () => {
                   </p>
                 </div>
               </section>
+            </div>
+
+            <div className="jp-footer-wrap">
+              <Footer />
             </div>
           </main>
         </div>
@@ -206,6 +211,12 @@ const STYLES = (darkMode) => `
     display: flex;
     flex-direction: column;
     gap: 24px;
+  }
+
+  .jp-footer-wrap {
+    width: 100%;
+    max-width: 1180px;
+    margin: 46px auto 0;
   }
 
   .jp-hero,
@@ -435,6 +446,10 @@ const STYLES = (darkMode) => `
 
     .jp-reminder {
       flex-direction: column;
+    }
+
+    .jp-footer-wrap {
+      margin-top: 36px;
     }
   }
 `;

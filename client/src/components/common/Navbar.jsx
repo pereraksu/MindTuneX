@@ -70,7 +70,6 @@ const Navbar = ({ user, onLogout, isAdmin }) => {
           border: 1px solid ${
             darkMode ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)"
           };
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
         }
 
         @media (min-width: 768px) {
@@ -80,7 +79,6 @@ const Navbar = ({ user, onLogout, isAdmin }) => {
         }
 
         .nav-link {
-          position: relative;
           padding: 8px 17px;
           border-radius: 999px;
           font-size: 13px;
@@ -262,10 +260,6 @@ const Navbar = ({ user, onLogout, isAdmin }) => {
           box-shadow: 0 10px 22px rgba(244,63,94,0.18);
         }
 
-        .logout-btn:active {
-          transform: scale(0.97);
-        }
-
         @media (max-width: 480px) {
           .navbar-inner {
             padding: 0 14px;
@@ -314,13 +308,30 @@ const Navbar = ({ user, onLogout, isAdmin }) => {
 
                 {!isAdmin && (
                   <>
-                    <NavLink to="/journal" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+                    <NavLink
+                      to="/journal"
+                      className={({ isActive }) =>
+                        `nav-link${isActive ? " active" : ""}`
+                      }
+                    >
                       Journal
                     </NavLink>
-                    <NavLink to="/support" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+
+                    <NavLink
+                      to="/support"
+                      className={({ isActive }) =>
+                        `nav-link${isActive ? " active" : ""}`
+                      }
+                    >
                       Support
                     </NavLink>
-                    <NavLink to="/reports" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+
+                    <NavLink
+                      to="/reports"
+                      className={({ isActive }) =>
+                        `nav-link${isActive ? " active" : ""}`
+                      }
+                    >
                       Reports
                     </NavLink>
                   </>
@@ -328,11 +339,31 @@ const Navbar = ({ user, onLogout, isAdmin }) => {
 
                 {isAdmin && (
                   <>
-                    <NavLink to="/admin/users" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+                    <NavLink
+                      to="/admin/users"
+                      className={({ isActive }) =>
+                        `nav-link${isActive ? " active" : ""}`
+                      }
+                    >
                       Users
                     </NavLink>
-                    <NavLink to="/admin/reports" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+
+                    <NavLink
+                      to="/admin/reports"
+                      className={({ isActive }) =>
+                        `nav-link${isActive ? " active" : ""}`
+                      }
+                    >
                       Reports
+                    </NavLink>
+
+                    <NavLink
+                      to="/admin/audit-logs"
+                      className={({ isActive }) =>
+                        `nav-link${isActive ? " active" : ""}`
+                      }
+                    >
+                      Audit Logs
                     </NavLink>
                   </>
                 )}
@@ -341,10 +372,21 @@ const Navbar = ({ user, onLogout, isAdmin }) => {
 
             {!user && (
               <>
-                <NavLink to="/login" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+                <NavLink
+                  to="/login"
+                  className={({ isActive }) =>
+                    `nav-link${isActive ? " active" : ""}`
+                  }
+                >
                   Login
                 </NavLink>
-                <NavLink to="/register" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+
+                <NavLink
+                  to="/register"
+                  className={({ isActive }) =>
+                    `nav-link${isActive ? " active" : ""}`
+                  }
+                >
                   Sign Up
                 </NavLink>
               </>
@@ -352,7 +394,11 @@ const Navbar = ({ user, onLogout, isAdmin }) => {
           </nav>
 
           <div className="navbar-right">
-            <button onClick={toggleTheme} className="theme-btn" aria-label="Toggle theme">
+            <button
+              onClick={toggleTheme}
+              className="theme-btn"
+              aria-label="Toggle theme"
+            >
               {darkMode ? (
                 <svg className="theme-btn-icon" viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="5" />
@@ -370,17 +416,20 @@ const Navbar = ({ user, onLogout, isAdmin }) => {
                   <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                 </svg>
               )}
+
               <span>{darkMode ? "Light" : "Dark"}</span>
             </button>
 
             {user && (
               <div className="user-chip">
                 <div className="user-avatar">{initials}</div>
+
                 <div style={{ minWidth: 0 }}>
                   <div className="user-name">
                     {user?.fullName || "User"}
                     {isAdmin && <span className="admin-badge">Admin</span>}
                   </div>
+
                   <div className="user-email">{user?.email}</div>
                 </div>
               </div>

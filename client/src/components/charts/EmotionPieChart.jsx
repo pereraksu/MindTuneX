@@ -14,72 +14,25 @@ const COLORS = [
   "#f97316", "#84cc16", "#06b6d4", "#a855f7",
 ];
 
-const CenterLabel = ({ cx, cy, total, darkMode }) => (
-  <>
-    <text
-      x={cx}
-      y={cy - 10}
-      textAnchor="middle"
-      fill={darkMode ? "rgba(255,255,255,0.9)" : "#0f172a"}
-      fontSize={28}
-      fontWeight={800}
-      fontFamily="'DM Sans', system-ui, sans-serif"
-    >
-      {total}
-    </text>
-
-    <text
-      x={cx}
-      y={cy + 16}
-      textAnchor="middle"
-      fill={darkMode ? "rgba(255,255,255,0.38)" : "rgba(15,23,42,0.46)"}
-      fontSize={10}
-      fontWeight={800}
-      fontFamily="'DM Sans', system-ui, sans-serif"
-      letterSpacing="0.18em"
-    >
-      ENTRIES
-    </text>
-  </>
-);
-
-const CustomLegend = ({ data }) => (
-  <div className="pie-legend">
-    {data.map((item, i) => (
-      <div key={item.name} className="pie-legend-item">
-        <span
-          className="pie-legend-dot"
-          style={{
-            background: COLORS[i % COLORS.length],
-            boxShadow: `0 0 8px ${COLORS[i % COLORS.length]}88`,
-          }}
-        />
-
-        <span className="pie-legend-name">{item.name}</span>
-        <span className="pie-legend-value">{item.value}</span>
-      </div>
-    ))}
-  </div>
-);
-
 const EmotionPieChart = ({ insight }) => {
   const { darkMode } = useTheme();
 
   const distribution =
     insight?.emotionDistribution || insight?.emotionCounts || {};
 
-  const data = Object.keys(distribution).map((key) => ({
-    name: key.charAt(0).toUpperCase() + key.slice(1),
-    value: Number(distribution[key]) || 0,
-  }));
+  const data = Object.keys(distribution)
+    .map((key) => ({
+      name: key.charAt(0).toUpperCase() + key.slice(1),
+      value: Number(distribution[key]) || 0,
+    }))
+    .filter((item) => item.value > 0);
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
-  if (data.length === 0 || total === 0) {
+  if (!data.length || total === 0) {
     return (
       <>
         <style>{STYLES(darkMode)}</style>
-
         <div className="pie-empty">
           <div className="pie-empty-icon">🥧</div>
           <p className="pie-empty-title">No emotion data yet</p>
@@ -107,14 +60,14 @@ const EmotionPieChart = ({ insight }) => {
         </div>
 
         <div className="pie-chart-area">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={260}>
             <PieChart>
               <Pie
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius="52%"
-                outerRadius="76%"
+                innerRadius={62}
+                outerRadius={96}
                 paddingAngle={3}
                 dataKey="value"
                 stroke="none"
@@ -123,26 +76,35 @@ const EmotionPieChart = ({ insight }) => {
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}
-                    opacity={0.92}
+                    opacity={0.95}
                   />
                 ))}
               </Pie>
 
-              <Pie
-                data={[{ value: 1 }]}
-                cx="50%"
-                cy="50%"
-                innerRadius={0}
-                outerRadius={0}
-                dataKey="value"
-                labelLine={false}
-                label={({ cx, cy }) => (
-                  <CenterLabel cx={cx} cy={cy} total={total} darkMode={darkMode} />
-                )}
-                stroke="none"
+              <text
+                x="50%"
+                y="47%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill={darkMode ? "rgba(255,255,255,0.92)" : "#0f172a"}
+                fontSize="28"
+                fontWeight="900"
               >
-                <Cell fill="transparent" />
-              </Pie>
+                {total}
+              </text>
+
+              <text
+                x="50%"
+                y="57%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill={darkMode ? "rgba(255,255,255,0.42)" : "rgba(15,23,42,0.48)"}
+                fontSize="10"
+                fontWeight="900"
+                letterSpacing="2"
+              >
+                ENTRIES
+              </text>
 
               <Tooltip
                 contentStyle={{
@@ -154,32 +116,35 @@ const EmotionPieChart = ({ insight }) => {
                     ? "1px solid rgba(255,255,255,0.1)"
                     : "1px solid rgba(15,23,42,0.08)",
                   borderRadius: "14px",
-                  boxShadow: darkMode
-                    ? "0 20px 40px rgba(0,0,0,0.5)"
-                    : "0 20px 40px rgba(15,23,42,0.12)",
+                  boxShadow: "0 20px 40px rgba(0,0,0,0.18)",
                   padding: "10px 14px",
-                  fontFamily: "'DM Sans', system-ui, sans-serif",
                   fontSize: 13,
                 }}
-                itemStyle={{
-                  color: "#14b8a6",
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
                 formatter={(value, name) => [`${value} entries`, name]}
-                cursor={false}
               />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
-        <CustomLegend data={data} />
+        <div className="pie-legend">
+          {data.map((item, i) => (
+            <div key={item.name} className="pie-legend-item">
+              <span
+                className="pie-legend-dot"
+                style={{
+                  background: COLORS[i % COLORS.length],
+                  boxShadow: `0 0 8px ${COLORS[i % COLORS.length]}88`,
+                }}
+              />
+              <span className="pie-legend-name">{item.name}</span>
+              <span className="pie-legend-value">{item.value}</span>
+            </div>
+          ))}
+        </div>
 
-        <div className="pie-total-wrap">
-          <div className="pie-total-pill">
-            <span className="pie-total-dot" />
-            Total logged emotions: <strong>{total}</strong>
-          </div>
+        <div className="pie-total-pill">
+          <span className="pie-total-dot" />
+          Total logged emotions: <strong>{total}</strong>
         </div>
       </div>
     </>
@@ -191,8 +156,9 @@ const STYLES = (darkMode) => `
   .pie-empty {
     position: relative;
     overflow: hidden;
-    height: 100%;
-    min-height: 360px;
+    width: 100%;
+    height: auto;
+    min-height: 460px;
     border-radius: 24px;
     border: 1px solid ${darkMode ? "rgba(255,255,255,0.09)" : "rgba(15,23,42,0.08)"};
     background: ${darkMode ? "rgba(15,23,42,0.72)" : "rgba(255,255,255,0.78)"};
@@ -221,7 +187,6 @@ const STYLES = (darkMode) => `
   .pie-header {
     position: relative;
     z-index: 1;
-    margin-bottom: 10px;
   }
 
   .pie-eyebrow {
@@ -248,8 +213,12 @@ const STYLES = (darkMode) => `
   .pie-chart-area {
     position: relative;
     z-index: 1;
-    flex: 1;
-    min-height: 230px;
+    width: 100%;
+    height: 260px;
+    min-height: 260px;
+    max-height: 260px;
+    margin-top: 18px;
+    flex: none;
   }
 
   .pie-legend {
@@ -258,7 +227,7 @@ const STYLES = (darkMode) => `
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 8px 12px;
-    margin-top: 16px;
+    margin-top: 12px;
   }
 
   @media(min-width: 520px) {
@@ -285,7 +254,6 @@ const STYLES = (darkMode) => `
     font-size: 11.5px;
     font-weight: 700;
     color: ${darkMode ? "rgba(255,255,255,0.46)" : "rgba(15,23,42,0.56)"};
-    text-transform: capitalize;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -293,24 +261,19 @@ const STYLES = (darkMode) => `
 
   .pie-legend-value {
     font-size: 11.5px;
-    font-weight: 800;
-    color: ${darkMode ? "rgba(255,255,255,0.72)" : "#0f172a"};
+    font-weight: 900;
+    color: ${darkMode ? "rgba(255,255,255,0.78)" : "#0f172a"};
     margin-left: auto;
-    flex-shrink: 0;
-  }
-
-  .pie-total-wrap {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    justify-content: center;
   }
 
   .pie-total-pill {
+    position: relative;
+    z-index: 1;
+    width: fit-content;
+    margin: 18px auto 0;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    margin: 16px auto 0;
     padding: 7px 16px;
     border-radius: 999px;
     background: ${darkMode ? "rgba(255,255,255,0.055)" : "rgba(15,23,42,0.045)"};
@@ -321,7 +284,7 @@ const STYLES = (darkMode) => `
   }
 
   .pie-total-pill strong {
-    color: ${darkMode ? "rgba(255,255,255,0.78)" : "#0f172a"};
+    color: ${darkMode ? "rgba(255,255,255,0.82)" : "#0f172a"};
     font-weight: 900;
   }
 
@@ -330,7 +293,6 @@ const STYLES = (darkMode) => `
     height: 7px;
     border-radius: 50%;
     background: linear-gradient(135deg,#14b8a6,#0ea5e9);
-    flex-shrink: 0;
     box-shadow: 0 0 10px rgba(20,184,166,0.65);
   }
 
@@ -344,29 +306,20 @@ const STYLES = (darkMode) => `
   }
 
   .pie-empty-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 20px;
-    background: ${darkMode ? "rgba(255,255,255,0.055)" : "rgba(15,23,42,0.055)"};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-    margin-bottom: 16px;
-    border: 1px solid ${darkMode ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)"};
+    font-size: 32px;
+    margin-bottom: 14px;
   }
 
   .pie-empty-title {
     font-size: 15px;
     font-weight: 800;
     color: ${darkMode ? "rgba(255,255,255,0.7)" : "#0f172a"};
-    margin-bottom: 6px;
   }
 
   .pie-empty-sub {
+    margin-top: 6px;
     font-size: 12.5px;
     color: ${darkMode ? "rgba(255,255,255,0.36)" : "rgba(15,23,42,0.48)"};
-    line-height: 1.6;
   }
 `;
 

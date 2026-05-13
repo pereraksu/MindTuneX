@@ -1,8 +1,6 @@
 import axios from "axios";
 
-// ======================================================
 // JOURNAL API INSTANCE
-// ======================================================
 
 const API = axios.create({
   baseURL:
@@ -16,10 +14,8 @@ const API = axios.create({
   },
 });
 
-// ======================================================
 // REQUEST INTERCEPTOR
 // Auto Attach JWT Token
-// ======================================================
 
 API.interceptors.request.use(
   (config) => {
@@ -38,18 +34,14 @@ API.interceptors.request.use(
   }
 );
 
-// ======================================================
 // RESPONSE INTERCEPTOR
 // Global Error Handling
-// ======================================================
 
 API.interceptors.response.use(
   (response) => response,
 
   (error) => {
-    // ==========================
     // Unauthorized
-    // ==========================
     if (error.response?.status === 401) {
       console.warn("⚠️ Session expired.");
 
@@ -60,31 +52,22 @@ API.interceptors.response.use(
         window.location.href = "/login";
       }
     }
-
-    // ==========================
     // Forbidden
-    // ==========================
     else if (error.response?.status === 403) {
       console.warn("⛔ Access denied.");
     }
 
-    // ==========================
     // Server Error
-    // ==========================
     else if (error.response?.status >= 500) {
       console.error("🔥 Journal Server Error:", error.response?.data);
     }
 
-    // ==========================
     // Timeout
-    // ==========================
     else if (error.code === "ECONNABORTED") {
       console.error("⌛ Journal request timeout.");
     }
 
-    // ==========================
     // Network Error
-    // ==========================
     else if (!error.response) {
       console.error("🌐 Network Error.");
     }
@@ -93,15 +76,11 @@ API.interceptors.response.use(
   }
 );
 
-// ======================================================
 // HELPER
-// ======================================================
 
 const handleResponse = (response) => response.data;
 
-// ======================================================
 // JOURNAL API FUNCTIONS
-// ======================================================
 
 // Create Journal Entry
 export const createJournalApi = async (payload) => {
@@ -132,9 +111,6 @@ export const deleteJournalApi = async (id) => {
   const response = await API.delete(`/${id}`);
   return handleResponse(response);
 };
-
-// ======================================================
 // EXPORT INSTANCE
-// ======================================================
 
 export default API;

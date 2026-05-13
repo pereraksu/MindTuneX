@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
+import Footer from "../components/common/Footer";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/useTheme";
 import { getMyMoodsApi } from "../api/moodApi";
@@ -381,6 +382,9 @@ const ReportsPage = () => {
                   </div>
                 </div>
               )}
+              <div className="rp-footer-wrap">
+                <Footer />
+              </div>
             </div>
           </main>
         </div>
@@ -762,6 +766,11 @@ const STYLES = (darkMode) => `
     .rp-container {
       overflow-x: auto;
     }
+  }
+     .sp-footer-wrap { 
+    width: 100%;
+    max-width: 1080px;
+    margin:46px auto 0;
   }
 `;
 
