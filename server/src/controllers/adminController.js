@@ -15,9 +15,7 @@ const sendError = (res, message, error) => {
   });
 };
 
-// ======================================================
 // ADMIN SUMMARY
-// ======================================================
 
 const getAdminSummary = async (req, res) => {
   try {
@@ -47,9 +45,7 @@ const getAdminSummary = async (req, res) => {
   }
 };
 
-// ======================================================
 // ADMIN USERS
-// ======================================================
 
 const getAdminUsers = async (req, res) => {
   try {
@@ -123,9 +119,7 @@ const getAdminUsers = async (req, res) => {
   }
 };
 
-// ======================================================
 // HIGH RISK ENTRIES
-// ======================================================
 
 const getHighRiskEntries = async (req, res) => {
   try {
@@ -151,9 +145,7 @@ const getHighRiskEntries = async (req, res) => {
   }
 };
 
-// ======================================================
 // SUPPORT USERS
-// ======================================================
 
 const getSupportUsers = async (req, res) => {
   try {
@@ -247,9 +239,7 @@ const getSupportUsers = async (req, res) => {
   }
 };
 
-// ======================================================
 // SYSTEM STATUS
-// ======================================================
 
 const getSystemStatus = async (req, res) => {
   try {
@@ -304,9 +294,7 @@ const getSystemStatus = async (req, res) => {
   }
 };
 
-// ======================================================
 // CHATBOT STATS
-// ======================================================
 
 const getChatbotStats = async (req, res) => {
   try {
@@ -430,9 +418,7 @@ const getChatbotStats = async (req, res) => {
   }
 };
 
-// ======================================================
 // MARK ALERT AS REVIEWED
-// ======================================================
 
 const markAlertReviewed = async (req, res) => {
   try {
@@ -467,9 +453,7 @@ const markAlertReviewed = async (req, res) => {
   }
 };
 
-// ======================================================
 // CONTACT RISK USER
-// ======================================================
 
 const contactRiskUser = async (req, res) => {
   try {

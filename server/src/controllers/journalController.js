@@ -1,9 +1,7 @@
 const mongoose = require("mongoose");
 const JournalEntry = require("../models/JournalEntry");
 
-// --------------------------------------------------
 // Create Journal Entry
-// --------------------------------------------------
 const createJournalEntry = async (req, res) => {
   try {
     const { title, content, text, moodEntry, tags } = req.body;

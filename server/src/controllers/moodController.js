@@ -52,9 +52,7 @@ const getPreviousNegativeCount = async (userId) =>
     sentimentLabel: "negative",
   });
 
-// --------------------------------------------------
 // A. Predict Only
-// --------------------------------------------------
 const predictMood = async (req, res) => {
   try {
     const text = String(req.body.text || "").trim();
@@ -86,9 +84,7 @@ const predictMood = async (req, res) => {
   }
 };
 
-// --------------------------------------------------
 // B. Quick Check-in
-// --------------------------------------------------
 const quickMoodCheckIn = async (req, res) => {
   try {
     const {
@@ -177,9 +173,7 @@ const quickMoodCheckIn = async (req, res) => {
   }
 };
 
-// --------------------------------------------------
 // C. Journal + AI Save
-// --------------------------------------------------
 const saveMoodEntry = async (req, res) => {
   try {
     const text = String(req.body.text || req.body.inputText || "").trim();
@@ -268,9 +262,7 @@ const saveMoodEntry = async (req, res) => {
   }
 };
 
-// --------------------------------------------------
 // D. Get My Moods
-// --------------------------------------------------
 const getMyMoodEntries = async (req, res) => {
   try {
     const moods = await MoodEntry.find({ user: req.user._id }).sort({
