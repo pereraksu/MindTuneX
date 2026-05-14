@@ -1,8 +1,6 @@
 const adminOnly = (req, res, next) => {
   try {
-    // --------------------------------------------------
     // 1. Authentication Check
-    // --------------------------------------------------
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -10,16 +8,12 @@ const adminOnly = (req, res, next) => {
       });
     }
 
-    // --------------------------------------------------
     // 2. Normalize Role
-    // --------------------------------------------------
     const role = String(req.user.role || "")
       .trim()
       .toLowerCase();
 
-    // --------------------------------------------------
     // 3. Admin Validation
-    // --------------------------------------------------
     if (role !== "admin") {
       return res.status(403).json({
         success: false,
@@ -27,9 +21,7 @@ const adminOnly = (req, res, next) => {
       });
     }
 
-    // --------------------------------------------------
     // 4. Optional Account Status Check
-    // --------------------------------------------------
     if (req.user.isActive === false) {
       return res.status(403).json({
         success: false,
@@ -37,9 +29,7 @@ const adminOnly = (req, res, next) => {
       });
     }
 
-    // --------------------------------------------------
     // 5. Continue
-    // --------------------------------------------------
     next();
   } catch (error) {
     console.error("adminOnly middleware error:", error.message);

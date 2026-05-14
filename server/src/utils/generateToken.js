@@ -1,17 +1,13 @@
 const jwt = require("jsonwebtoken");
 
-// --------------------------------------------------
 // Environment Validation
-// --------------------------------------------------
 if (!process.env.JWT_SECRET) {
   throw new Error(
     "❌ JWT_SECRET is missing from environment variables"
   );
 }
 
-// --------------------------------------------------
 // Generate JWT Token
-// --------------------------------------------------
 const generateToken = (id, role = "user") => {
   try {
     if (!id) {
@@ -46,9 +42,7 @@ const generateToken = (id, role = "user") => {
   }
 };
 
-// --------------------------------------------------
 // Optional Token Verifier Utility
-// --------------------------------------------------
 const verifyToken = (token) => {
   try {
     return jwt.verify(

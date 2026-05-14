@@ -18,7 +18,7 @@ export default function AboutMindTuneXPage() {
 
         <nav className="about-nav">
           <Link to="/" className="about-logo-link">
-            <MindTuneXLogo />
+            <MindTuneXLogo size="md" />
           </Link>
 
           <div className="about-nav-links">

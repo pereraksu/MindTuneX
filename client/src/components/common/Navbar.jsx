@@ -270,6 +270,15 @@ const Navbar = ({ user, onLogout, isAdmin }) => {
             padding: 8px 12px;
           }
         }
+          .navbar-logo-small {
+  transform: scale(0.72);
+  transform-origin: left center;
+  width: fit-content;
+}
+
+.navbar-inner {
+  height: 64px;
+}
       `}</style>
 
       <header className="navbar-root">
@@ -280,7 +289,11 @@ const Navbar = ({ user, onLogout, isAdmin }) => {
             to={user ? (isAdmin ? "/admin" : "/dashboard") : "/"}
             style={{ flexShrink: 0, textDecoration: "none" }}
           >
-            <MindTuneXLogo isAdmin={isAdmin} />
+            <MindTuneXLogo
+            size="sm"
+            showTagline={true}
+            className="navbar-logo-small"
+          />
           </Link>
 
           <nav className="nav-pill">

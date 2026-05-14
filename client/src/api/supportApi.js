@@ -1,8 +1,6 @@
 import axios from "axios";
 
-// ======================================================
 // SUPPORT API INSTANCE
-// ======================================================
 
 const API = axios.create({
   baseURL:
@@ -16,10 +14,8 @@ const API = axios.create({
   },
 });
 
-// ======================================================
 // REQUEST INTERCEPTOR
 // Auto Attach JWT Token
-// ======================================================
 
 API.interceptors.request.use(
   (config) => {
@@ -38,18 +34,14 @@ API.interceptors.request.use(
   }
 );
 
-// ======================================================
 // RESPONSE INTERCEPTOR
 // Global Error Handling
-// ======================================================
 
 API.interceptors.response.use(
   (response) => response,
 
   (error) => {
-    // ==========================
     // Unauthorized
-    // ==========================
     if (error.response?.status === 401) {
       console.warn("⚠️ Session expired.");
 
@@ -61,37 +53,27 @@ API.interceptors.response.use(
       }
     }
 
-    // ==========================
     // Forbidden
-    // ==========================
     else if (error.response?.status === 403) {
       console.warn("⛔ Access denied.");
     }
 
-    // ==========================
     // Validation Error
-    // ==========================
     else if (error.response?.status === 400) {
       console.warn("⚠️ Invalid support request.");
     }
 
-    // ==========================
     // Server Error
-    // ==========================
     else if (error.response?.status >= 500) {
       console.error("🔥 Support Server Error:", error.response?.data);
     }
 
-    // ==========================
     // Timeout
-    // ==========================
     else if (error.code === "ECONNABORTED") {
       console.error("⌛ Support request timeout.");
     }
 
-    // ==========================
     // Network Error
-    // ==========================
     else if (!error.response) {
       console.error("🌐 Network Error.");
     }
@@ -100,42 +82,35 @@ API.interceptors.response.use(
   }
 );
 
-// ======================================================
 // HELPER
-// ======================================================
 
 const handleResponse = (response) => response.data;
 
-// ======================================================
 // SUPPORT API FUNCTIONS
-// ======================================================
 
-// 🤝 Get Personalized Support
+// Get Personalized Support
 export const getSupportApi = async (payload) => {
   const response = await API.post("/", payload);
   return handleResponse(response);
 };
 
-// 🧘 Wellness Recommendations
+// Wellness Recommendations
 export const getWellnessRecommendationsApi = async () => {
   const response = await API.get("/recommendations");
   return handleResponse(response);
 };
 
-// 🚨 Crisis Support Resources
+// Crisis Support Resources
 export const getCrisisResourcesApi = async () => {
   const response = await API.get("/crisis-resources");
   return handleResponse(response);
 };
 
-// 💬 AI Coping Suggestions
+// AI Coping Suggestions
 export const getCopingStrategiesApi = async (payload) => {
   const response = await API.post("/coping-strategies", payload);
   return handleResponse(response);
 };
-
-// ======================================================
 // EXPORT INSTANCE
-// ======================================================
 
 export default API;

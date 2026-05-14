@@ -5,9 +5,7 @@ const protect = async (req, res, next) => {
   try {
     let token;
 
-    // --------------------------------------------------
     // 1. Extract Token from Authorization Header
-    // --------------------------------------------------
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer ")
@@ -15,19 +13,14 @@ const protect = async (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
     }
 
-    // --------------------------------------------------
     // 2. Token Validation
-    // --------------------------------------------------
     if (!token) {
       return res.status(401).json({
         success: false,
         message: "Access denied. No authentication token provided.",
       });
     }
-
-    // --------------------------------------------------
     // 3. Verify JWT
-    // --------------------------------------------------
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     if (!decoded?.id) {
@@ -37,9 +30,7 @@ const protect = async (req, res, next) => {
       });
     }
 
-    // --------------------------------------------------
     // 4. Find User
-    // --------------------------------------------------
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
@@ -49,28 +40,21 @@ const protect = async (req, res, next) => {
       });
     }
 
-    // --------------------------------------------------
     // 5. Check Account Status
-    // --------------------------------------------------
     if (user.isActive === false) {
       return res.status(403).json({
         success: false,
         message: "This account has been deactivated.",
       });
     }
-
-    // --------------------------------------------------
     // 6. Attach User to Request
-    // --------------------------------------------------
     req.user = user;
 
     next();
   } catch (error) {
     console.error("protect middleware error:", error.message);
 
-    // --------------------------------------------------
     // JWT Specific Errors
-    // --------------------------------------------------
     if (error.name === "TokenExpiredError") {
       return res.status(401).json({
         success: false,
@@ -84,10 +68,7 @@ const protect = async (req, res, next) => {
         message: "Invalid authentication token.",
       });
     }
-
-    // --------------------------------------------------
     // Generic Error
-    // --------------------------------------------------
     return res.status(401).json({
       success: false,
       message: "Authentication failed.",

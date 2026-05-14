@@ -18,9 +18,7 @@ const POSITIVE_EMOTIONS = [
   "surprise",
 ];
 
-// --------------------------------------------------
 // Crisis Keywords
-// --------------------------------------------------
 const CRISIS_KEYWORDS = [
   "hopeless",
   "worthless",
@@ -41,9 +39,7 @@ const CRISIS_KEYWORDS = [
   "unwanted",
 ];
 
-// --------------------------------------------------
 // Calculate Risk Score
-// --------------------------------------------------
 const calculateRiskScore = ({
   predictedEmotion = "neutral",
   sentimentLabel = "neutral",
@@ -54,9 +50,7 @@ const calculateRiskScore = ({
 }) => {
   let score = 0;
 
-  // --------------------------------------------------
   // Normalize Inputs
-  // --------------------------------------------------
   const emotion = String(predictedEmotion)
     .trim()
     .toLowerCase();
@@ -73,9 +67,7 @@ const calculateRiskScore = ({
     .trim()
     .toLowerCase();
 
-  // --------------------------------------------------
   // Emotion Weight
-  // --------------------------------------------------
   if (HIGH_RISK_EMOTIONS.includes(emotion)) {
     score += 35;
   } else if (
@@ -88,27 +80,21 @@ const calculateRiskScore = ({
     score -= 10;
   }
 
-  // --------------------------------------------------
   // Sentiment Weight
-  // --------------------------------------------------
   if (sentiment === "negative") {
     score += 20;
   } else if (sentiment === "positive") {
     score -= 8;
   }
 
-  // --------------------------------------------------
   // Support Level Weight
-  // --------------------------------------------------
   if (support === "high") {
     score += 25;
   } else if (support === "moderate") {
     score += 10;
   }
 
-  // --------------------------------------------------
   // Confidence Weight
-  // --------------------------------------------------
   if (confidence >= 0.9) {
     score += 12;
   } else if (confidence >= 0.8) {
@@ -117,18 +103,14 @@ const calculateRiskScore = ({
     score += 6;
   }
 
-  // --------------------------------------------------
   // Crisis Keyword Detection
-  // --------------------------------------------------
   const matchedKeywords = CRISIS_KEYWORDS.filter(
     (word) => inputText.includes(word)
   );
 
   score += matchedKeywords.length * 5;
 
-  // --------------------------------------------------
   // Historical Emotional Pattern
-  // --------------------------------------------------
   if (previousNegativeCount >= 3) {
     score += 5;
   }
@@ -141,9 +123,7 @@ const calculateRiskScore = ({
     score += 10;
   }
 
-  // --------------------------------------------------
   // Protective Positive Language
-  // --------------------------------------------------
   const positiveIndicators = [
     "hope",
     "better",
@@ -162,17 +142,13 @@ const calculateRiskScore = ({
     score -= 5;
   }
 
-  // --------------------------------------------------
   // Final Clamp
-  // --------------------------------------------------
   score = Math.max(0, Math.min(100, score));
 
   return Math.round(score);
 };
 
-// --------------------------------------------------
 // Risk Band
-// --------------------------------------------------
 const getRiskBand = (riskScore = 0) => {
   if (riskScore >= 75) {
     return "critical";
@@ -189,9 +165,7 @@ const getRiskBand = (riskScore = 0) => {
   return "low";
 };
 
-// --------------------------------------------------
 // Risk Metadata Helper
-// --------------------------------------------------
 const getRiskMetadata = (riskScore = 0) => {
   const band = getRiskBand(riskScore);
 

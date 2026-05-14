@@ -1,14 +1,43 @@
 import React from "react";
 
-const MindTuneXLogo = ({ className = "" }) => {
+const LOGO_SIZES = {
+  sm: {
+    icon: "h-8 w-8",
+    heading: "text-lg",
+    tagline: "text-[8px]",
+  },
+  md: {
+    icon: "h-10 w-10",
+    heading: "text-2xl",
+    tagline: "text-[9px]",
+  },
+  lg: {
+    icon: "h-11 w-11",
+    heading: "text-[2rem]",
+    tagline: "text-[10px]",
+  },
+  xl: {
+    icon: "h-12 w-12",
+    heading: "text-[2.3rem]",
+    tagline: "text-xs",
+  },
+};
+
+const MindTuneXLogo = ({
+  className = "",
+  size = "md",
+  showTagline = true,
+}) => {
+  const { icon, heading, tagline } = LOGO_SIZES[size] || LOGO_SIZES.md;
+
   return (
     <div className={`group flex items-center gap-3 cursor-pointer ${className}`}>
-      
       {/* ICON */}
-      <div className="relative flex h-11 w-11 shrink-0 items-center justify-center transition-all duration-300 group-hover:scale-110">
-        
+      <div
+        className={`relative flex ${icon} shrink-0 items-center justify-center transition-all duration-300 group-hover:scale-105`}
+      >
         {/* Glow */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-teal-400/30 to-sky-500/30 blur-xl opacity-0 group-hover:opacity-100 transition duration-300" />
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-teal-400/30 to-sky-500/30 blur-xl opacity-0 transition duration-300 group-hover:opacity-100" />
 
         <svg
           viewBox="0 0 100 100"
@@ -16,7 +45,13 @@ const MindTuneXLogo = ({ className = "" }) => {
           className="relative z-10 h-full w-full"
         >
           <defs>
-            <linearGradient id="logoGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+            <linearGradient
+              id="logoGradient"
+              x1="0%"
+              y1="100%"
+              x2="100%"
+              y2="0%"
+            >
               <stop offset="0%" stopColor="#14b8a6" />
               <stop offset="100%" stopColor="#38bdf8" />
             </linearGradient>
@@ -28,28 +63,33 @@ const MindTuneXLogo = ({ className = "" }) => {
             strokeWidth="5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="transition-all duration-300 group-hover:stroke-[5.5]"
+            className="transition-all duration-300"
           />
         </svg>
       </div>
 
       {/* TEXT */}
       <div className="flex flex-col justify-center">
-        <h1 className="font-sans text-2xl font-bold tracking-tight leading-none">
-          
-          <span className="text-slate-800 dark:text-white transition-colors">
+        <h1
+          className={`${heading} font-bold tracking-tight leading-none`}
+          style={{ fontFamily: '"DM Serif Display", Georgia, serif' }}
+        >
+          <span className="text-slate-800 transition-colors dark:text-white">
             Mind
           </span>
 
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 via-sky-500 to-cyan-400 transition-all duration-300 group-hover:brightness-110">
+          <span className="bg-gradient-to-r from-teal-500 via-sky-500 to-cyan-400 bg-clip-text text-transparent transition-all duration-300 group-hover:brightness-110">
             TuneX
           </span>
-
         </h1>
 
-        <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">
-          Emotion-Aware Support
-        </p>
+        {showTagline && (
+          <p
+            className={`mt-1 ${tagline} font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400`}
+          >
+            Emotion-Aware Support
+          </p>
+        )}
       </div>
     </div>
   );

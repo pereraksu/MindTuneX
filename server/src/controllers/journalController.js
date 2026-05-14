@@ -51,9 +51,7 @@ const createJournalEntry = async (req, res) => {
   }
 };
 
-// --------------------------------------------------
 // Get My Journal Entries
-// --------------------------------------------------
 const getMyJournalEntries = async (req, res) => {
   try {
     const journals = await JournalEntry.find({ user: req.user._id })

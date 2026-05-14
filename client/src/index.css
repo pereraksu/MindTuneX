@@ -1,6 +1,41 @@
 @import "tailwindcss";
 @variant dark (&:where(.dark, .dark *));
 
+:root {
+  color-scheme: light;
+  font-family: "Inter", "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #0f172a;
+  background: #f8fafc;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-soft: #f1f5f9;
+  --text: #0f172a;
+  --muted: #475569;
+  --border: #e2e8f0;
+  --primary: #14b8a6;
+  --primary-strong: #0f766e;
+  --accent: #2563eb;
+  --surface-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+}
+
+.dark {
+  color-scheme: dark;
+  color: #f8fafc;
+  background: #050810;
+  --bg: #050810;
+  --surface: #0f172a;
+  --surface-soft: #111827;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --border: #1e293b;
+  --primary: #0f766e;
+  --primary-strong: #0f766e;
+  --accent: #60a5fa;
+  --surface-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -11,9 +46,107 @@ html {
 
 body {
   margin: 0;
-  font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f8fafc;
-  color: #0f172a;
+  min-height: 100vh;
+  font-family: inherit;
+  line-height: inherit;
+  background: radial-gradient(circle at top, rgba(20, 184, 166, 0.12), transparent 25%), var(--bg);
+  color: var(--text);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+  border-radius: 0.85rem;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+::selection {
+  background: rgba(20, 184, 166, 0.25);
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: inherit;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(2.4rem, 2.1rem + 1.5vw, 4rem);
+  line-height: 1.05;
+}
+
+h2 {
+  font-size: clamp(1.8rem, 1.7rem + 1vw, 2.5rem);
+  line-height: 1.1;
+}
+
+h3 {
+  font-size: clamp(1.4rem, 1.35rem + 0.8vw, 1.8rem);
+  line-height: 1.2;
+}
+
+p,
+li,
+button,
+input,
+textarea,
+select {
+  letter-spacing: 0.01em;
+}
+
+p,
+li {
+  color: var(--muted);
+}
+
+a {
+  color: var(--primary-strong);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--primary);
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(20, 184, 166, 0.35);
+  outline-offset: 2px;
+}
+
+.card-surface {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--surface-shadow);
+  backdrop-filter: blur(16px);
+}
+
+.section-heading {
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+}
+
+.small-text {
+  color: var(--muted);
 }
 
 .dark body {
@@ -79,9 +212,7 @@ button {
   fill: rgba(255, 255, 255, 0.45);
 }
 
-/* ========================================
-   Mood Calendar Heatmap
-======================================== */
+   //Mood Calendar Heatmap
 
 .mood-calendar-container .react-calendar-heatmap {
   width: 100%;

@@ -41,9 +41,7 @@ API.interceptors.response.use(
   (response) => response,
 
   (error) => {
-    // ==========================
     // Unauthorized
-    // ==========================
     if (error.response?.status === 401) {
       console.warn("⚠️ Session expired.");
 
@@ -55,37 +53,27 @@ API.interceptors.response.use(
       }
     }
 
-    // ==========================
     // Forbidden
-    // ==========================
     else if (error.response?.status === 403) {
       console.warn("⛔ Access denied.");
     }
 
-    // ==========================
     // Validation Error
-    // ==========================
     else if (error.response?.status === 400) {
       console.warn("⚠️ Invalid mood request.");
     }
 
-    // ==========================
     // Server Error
-    // ==========================
     else if (error.response?.status >= 500) {
       console.error("🔥 Mood Server Error:", error.response?.data);
     }
 
-    // ==========================
     // Timeout
-    // ==========================
     else if (error.code === "ECONNABORTED") {
       console.error("⌛ Mood request timeout.");
     }
 
-    // ==========================
     // Network Error
-    // ==========================
     else if (!error.response) {
       console.error("🌐 Network Error.");
     }
@@ -93,61 +81,54 @@ API.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// ======================================================
 // HELPER
-// ======================================================
 
 const handleResponse = (response) => response.data;
 
-// ======================================================
 // MOOD API FUNCTIONS
-// ======================================================
 
-// 🧠 AI Prediction Only
+//  AI Prediction Only
 export const predictMoodApi = async (payload) => {
   const response = await API.post("/predict", payload);
   return handleResponse(response);
 };
 
-// ⚡ Quick Mood Save
+// Quick Mood Save
 export const saveMoodApi = async (payload) => {
   const response = await API.post("/", payload);
   return handleResponse(response);
 };
 
-// ✍️ Journal Save + AI Analysis
+// Journal Save + AI Analysis
 export const saveJournalApi = async (payload) => {
   const response = await API.post("/journal", payload);
   return handleResponse(response);
 };
 
-// 📊 Get Mood History
+//  Get Mood History
 export const getMyMoodsApi = async () => {
   const response = await API.get("/");
   return handleResponse(response);
 };
 
-// 📈 Mood Analytics (Future Feature)
+// Mood Analytics (Future Feature)
 export const getMoodAnalyticsApi = async () => {
   const response = await API.get("/analytics");
   return handleResponse(response);
 };
 
-// 🔥 Emotion Trends
+//  Emotion Trends
 export const getEmotionTrendsApi = async () => {
   const response = await API.get("/emotion-trends");
   return handleResponse(response);
 };
 
-// 🚨 Crisis Detection Logs
+//  Crisis Detection Logs
 export const getRiskAlertsApi = async () => {
   const response = await API.get("/risk-alerts");
   return handleResponse(response);
 };
 
-// ======================================================
 // EXPORT INSTANCE
-// ======================================================
 
 export default API;

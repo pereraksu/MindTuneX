@@ -12,7 +12,7 @@ const Footer = ({ admin = false }) => {
 
       <footer className="mtx-footer">
         <div className="footer-brand">
-          <MindTuneXLogo />
+          <MindTuneXLogo size="md" showTagline={false} />
 
           <p>
             AI-powered emotional wellness platform designed to support mood

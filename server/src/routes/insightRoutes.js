@@ -9,22 +9,14 @@ const {
 } = require("../middleware/authMiddleware");
 
 const router = express.Router();
-
-// --------------------------------------------------
 // Protected Insight Routes
-// --------------------------------------------------
 router.use(protect);
 
-// --------------------------------------------------
+// Generate user weekly emotional insights
 // Weekly AI Insights
-// --------------------------------------------------
-
-// 📊 Generate user weekly emotional insights
 router.get("/weekly", getWeeklyInsights);
 
-// --------------------------------------------------
 // Health Check
-// --------------------------------------------------
 router.get("/health", (req, res) => {
   return res.status(200).json({
     success: true,

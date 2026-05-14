@@ -18,7 +18,7 @@ export default function PrivacyConsentPage() {
 
         <nav className="privacy-nav">
           <Link to="/" className="privacy-logo-link">
-            <MindTuneXLogo />
+            <MindTuneXLogo size="md" />
           </Link>
 
           <div className="privacy-nav-links">

@@ -2,9 +2,7 @@ const mongoose = require("mongoose");
 
 const reportSchema = new mongoose.Schema(
   {
-    // --------------------------------------------------
     // User Reference
-    // --------------------------------------------------
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -12,9 +10,7 @@ const reportSchema = new mongoose.Schema(
       index: true,
     },
 
-    // --------------------------------------------------
     // Report Type
-    // --------------------------------------------------
     reportType: {
       type: String,
       enum: ["weekly", "monthly", "custom"],
@@ -23,9 +19,7 @@ const reportSchema = new mongoose.Schema(
       index: true,
     },
 
-    // --------------------------------------------------
     // Report Title
-    // --------------------------------------------------
     title: {
       type: String,
       default: "Mood Report",
@@ -33,18 +27,14 @@ const reportSchema = new mongoose.Schema(
       maxlength: 150,
     },
 
-    // --------------------------------------------------
     // PDF / File URL
-    // --------------------------------------------------
     fileUrl: {
       type: String,
       default: "",
       trim: true,
     },
 
-    // --------------------------------------------------
     // Report Time Period
-    // --------------------------------------------------
     generatedForStart: {
       type: Date,
       default: null,
@@ -54,10 +44,7 @@ const reportSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-
-    // --------------------------------------------------
     // Analytics Snapshot
-    // --------------------------------------------------
     summary: {
       totalEntries: {
         type: Number,
@@ -118,9 +105,7 @@ const reportSchema = new mongoose.Schema(
       },
     },
 
-    // --------------------------------------------------
     // Report Generation Status
-    // --------------------------------------------------
     status: {
       type: String,
       enum: ["pending", "generated", "failed"],
@@ -129,9 +114,7 @@ const reportSchema = new mongoose.Schema(
       index: true,
     },
 
-    // --------------------------------------------------
     // Metadata
-    // --------------------------------------------------
     generatedBy: {
       type: String,
       default: "MindTuneX AI Engine",
@@ -148,9 +131,7 @@ const reportSchema = new mongoose.Schema(
   }
 );
 
-// --------------------------------------------------
 // Indexes
-// --------------------------------------------------
 reportSchema.index({ user: 1, createdAt: -1 });
 
 reportSchema.index({
@@ -163,10 +144,7 @@ reportSchema.index({
   status: 1,
   createdAt: -1,
 });
-
-// --------------------------------------------------
 // Clean JSON Response
-// --------------------------------------------------
 reportSchema.set("toJSON", {
   transform: (_, ret) => {
     delete ret.__v;

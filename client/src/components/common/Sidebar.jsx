@@ -121,12 +121,15 @@ const Sidebar = ({ forceAdmin = false }) => {
           z-index: 1;
         }
 
-        .sidebar-logo-area {
-          padding: 28px 24px 24px;
-          border-bottom: 1px solid ${
-            darkMode ? "rgba(255,255,255,0.07)" : "rgba(15,23,42,0.07)"
-          };
-        }
+        .sidebar-brand-logo {
+  transform: scale(0.62);
+  transform-origin: left center;
+  width: fit-content;
+}
+
+.sidebar-logo-area {
+  padding: 18px 22px 16px;
+}
 
         .sidebar-user-card {
           margin: 18px 16px 0;
@@ -321,7 +324,7 @@ const Sidebar = ({ forceAdmin = false }) => {
 
       <aside className="sidebar-shell">
         <div className="sidebar-logo-area">
-          <Logo isAdmin={isActuallyAdmin} />
+          <Logo size="sm" showTagline={true} className="sidebar-brand-logo" />
         </div>
 
         <div className="sidebar-user-card">

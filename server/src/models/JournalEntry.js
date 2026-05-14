@@ -2,9 +2,7 @@ const mongoose = require("mongoose");
 
 const journalEntrySchema = new mongoose.Schema(
   {
-    // --------------------------------------------------
     // User Reference
-    // --------------------------------------------------
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -12,9 +10,7 @@ const journalEntrySchema = new mongoose.Schema(
       index: true,
     },
 
-    // --------------------------------------------------
     // Journal Title
-    // --------------------------------------------------
     title: {
       type: String,
       default: "",
@@ -22,9 +18,7 @@ const journalEntrySchema = new mongoose.Schema(
       maxlength: 120,
     },
 
-    // --------------------------------------------------
     // Main Journal Content
-    // --------------------------------------------------
     content: {
       type: String,
       required: [true, "Journal content is required"],
@@ -33,18 +27,14 @@ const journalEntrySchema = new mongoose.Schema(
       maxlength: 5000,
     },
 
-    // --------------------------------------------------
     // Related Mood Analysis Entry
-    // --------------------------------------------------
     moodEntry: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "MoodEntry",
       default: null,
     },
 
-    // --------------------------------------------------
     // Optional Tags
-    // --------------------------------------------------
     tags: {
       type: [String],
       default: [],
@@ -56,18 +46,14 @@ const journalEntrySchema = new mongoose.Schema(
       },
     },
 
-    // --------------------------------------------------
     // Analysis Status
-    // --------------------------------------------------
     isAnalyzed: {
       type: Boolean,
       default: true,
       index: true,
     },
 
-    // --------------------------------------------------
     // Privacy & Favorites
-    // --------------------------------------------------
     isPrivate: {
       type: Boolean,
       default: true,
@@ -77,10 +63,7 @@ const journalEntrySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-
-    // --------------------------------------------------
     // AI Metadata
-    // --------------------------------------------------
     aiSummary: {
       type: String,
       default: "",
@@ -99,34 +82,24 @@ const journalEntrySchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
-// --------------------------------------------------
 // Full Text Search Index
-// --------------------------------------------------
 journalEntrySchema.index({
   title: "text",
   content: "text",
   tags: "text",
 });
 
-// --------------------------------------------------
 // Compound Indexes
-// --------------------------------------------------
 journalEntrySchema.index({ user: 1, createdAt: -1 });
 journalEntrySchema.index({ user: 1, detectedEmotion: 1 });
 
-// --------------------------------------------------
 // Virtual: Short Preview
-// --------------------------------------------------
 journalEntrySchema.virtual("preview").get(function () {
   return this.content.length > 120
     ? `${this.content.substring(0, 120)}...`
     : this.content;
 });
-
-// --------------------------------------------------
 // Clean JSON Response
-// --------------------------------------------------
 journalEntrySchema.set("toJSON", {
   virtuals: true,
   transform: (_, ret) => {

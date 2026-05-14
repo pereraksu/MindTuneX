@@ -1,8 +1,6 @@
 const CryptoJS = require("crypto-js");
 
-// --------------------------------------------------
 // Environment Validation
-// --------------------------------------------------
 if (
   process.env.NODE_ENV === "production" &&
   !process.env.ENCRYPTION_KEY
@@ -17,9 +15,7 @@ const SECRET_KEY =
   process.env.ENCRYPTION_KEY ||
   "dev_fallback_key_change_me";
 
-// --------------------------------------------------
 // Encrypt Text
-// --------------------------------------------------
 const encryptText = (text) => {
   try {
     if (text === null || text === undefined) {
@@ -48,9 +44,7 @@ const encryptText = (text) => {
   }
 };
 
-// --------------------------------------------------
 // Decrypt Text
-// --------------------------------------------------
 const decryptText = (cipherText) => {
   try {
     if (cipherText === null || cipherText === undefined) {
@@ -72,9 +66,7 @@ const decryptText = (cipherText) => {
 
     const decrypted = bytes.toString(CryptoJS.enc.Utf8);
 
-    // --------------------------------------------------
     // Handle legacy plain text data safely
-    // --------------------------------------------------
     if (!decrypted) {
       return cipherText;
     }
@@ -88,9 +80,7 @@ const decryptText = (cipherText) => {
   }
 };
 
-// --------------------------------------------------
 // Optional Utility
-// --------------------------------------------------
 const isEncrypted = (value) => {
   try {
     if (!value || typeof value !== "string") {

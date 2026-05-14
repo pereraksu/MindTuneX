@@ -43,7 +43,7 @@ const LoginPage = () => {
 
         <div className="lp-card">
           <div className="lp-brand">
-            <MindTuneXLogo />
+              <MindTuneXLogo size="md" />
           </div>
 
           <div className="lp-heading">
