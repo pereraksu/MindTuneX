@@ -99,6 +99,6 @@ export const clearChatHistoryApi = async () => {
   const response = await API.delete("/clear");
   return handleResponse(response);
 };
-// EXPORT INSTANCE
+// EXPORT INSTANCEserver
 
 export default API;
